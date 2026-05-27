@@ -3,6 +3,7 @@
 
 #include <QPainter>
 #include <QRectF>
+#include <QPixmap>
 
 class Plataforma
 {
@@ -16,16 +17,22 @@ private:
     float frecuencia;
     float tiempo;
 
+    QPixmap spritePlataforma;
+
 public:
     Plataforma();
 
     void actualizar(float dt);
     void dibujar(QPainter& painter);
 
+    void configurarOscilacion(float nuevaAmplitud, float nuevaFrecuencia);
+
     QRectF rect() const;
 
     float getX() const;
     float getY() const;
+    float getAncho() const;
+    float getAlto() const;
 };
 
 #endif
