@@ -4,7 +4,8 @@
 #include <QWidget>
 #include <QTimer>
 #include <QKeyEvent>
-#include "../logica/NivelPiscinaEntrenamiento.h"
+#include <QVector>
+#include "../logica/NivelJuego.h"
 
 class GameWidget : public QWidget
 {
@@ -12,7 +13,13 @@ class GameWidget : public QWidget
 
 private:
     QTimer* timer;
-    NivelPiscinaEntrenamiento* nivel;
+    QVector<NivelJuego*> niveles;
+    int nivelActual;
+    bool mostrarAyuda;
+
+    NivelJuego* nivel();
+    void cargarNiveles();
+    void avanzarNivel();
 
 public:
     explicit GameWidget(QWidget* parent = nullptr);

@@ -8,13 +8,16 @@
 
 #include "../entidades/Personaje.h"
 #include "../entidades/Plataforma.h"
+#include "../agente/DronVigilante.h"
 #include "Dificultad.h"
+#include "NivelJuego.h"
 
-class NivelPiscinaEntrenamiento
+class NivelPiscinaEntrenamiento : public NivelJuego
 {
 private:
     Personaje* jugador;
     Plataforma* plataforma;
+    DronVigilante* dron;
 
     QRectF piscina;
     QRectF zonaViento;
@@ -41,16 +44,17 @@ private:
     float vientoLateral;
     float gravedad;
     float errorEntrada;
+    float tiempoNivel;
 
 public:
     NivelPiscinaEntrenamiento();
     ~NivelPiscinaEntrenamiento();
 
-    void actualizar(float dt);
-    void dibujar(QPainter& painter);
+    void actualizar(float dt) override;
+    void dibujar(QPainter& painter) override;
 
-    void teclaPresionada(int tecla);
-    void teclaLiberada(int tecla);
+    void teclaPresionada(int tecla) override;
+    void teclaLiberada(int tecla) override;
 
     void verificarColisiones();
     void verificarPiscina();
@@ -60,12 +64,15 @@ public:
     void calcularPuntajePorEntrada();
 
     void reiniciarIntento();
-    void reiniciarNivel();
+    void reiniciarNivel() override;
 
     void cambiarDificultad(TipoDificultad tipo);
     void aplicarParametrosDificultad();
 
     int getPuntaje() const;
+    bool estaSuperado() const override;
+    bool estaPerdido() const override;
+    QString nombreNivel() const override;
 };
 
 #endif

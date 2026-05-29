@@ -1,19 +1,14 @@
 #include "Personaje.h"
 
 Personaje::Personaje()
+    : Entidad(120.0f, 300.0f, 34.0f, 68.0f)
 {
-    x = 120.0f;
-    y = 300.0f;
-
     vx = 0.0f;
     vy = 0.0f;
     ax = 0.0f;
     ay = 0.0f;
 
     // AQUÍ van estos valores
-    ancho = 34.0f;
-    alto = 68.0f;
-
     masa = 1.0f;
 
     enAire = false;
@@ -220,16 +215,6 @@ void Personaje::colocarEn(float nuevoX, float nuevoY)
 {
     x = nuevoX;
     y = nuevoY;
-}
-
-QRectF Personaje::rect() const
-{
-    return QRectF(x, y, ancho, alto);
-}
-
-QPointF Personaje::centro() const
-{
-    return QPointF(x + ancho / 2.0f, y + alto / 2.0f);
 }
 
 float Personaje::getX() const
