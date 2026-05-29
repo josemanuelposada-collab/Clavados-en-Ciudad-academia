@@ -2,13 +2,10 @@
 #include <cmath>
 
 Plataforma::Plataforma()
+    : Entidad(90.0f, 365.0f, 170.0f, 55.0f),
+      oscilacion(45.0f, 2.0f)
 {
     xBase = 90.0f;
-    x = xBase;
-    y = 365.0f;
-
-    ancho = 170.0f;
-    alto = 55.0f;
 
     amplitud = 45.0f;
     frecuencia = 2.0f;
@@ -20,7 +17,7 @@ Plataforma::Plataforma()
 void Plataforma::actualizar(float dt)
 {
     tiempo += dt;
-    x = xBase + amplitud * std::sin(frecuencia * tiempo);
+    x = oscilacion.calcular(tiempo, xBase);
 }
 
 void Plataforma::dibujar(QPainter& painter)
@@ -54,29 +51,12 @@ void Plataforma::configurarOscilacion(float nuevaAmplitud, float nuevaFrecuencia
 {
     amplitud = nuevaAmplitud;
     frecuencia = nuevaFrecuencia;
+    oscilacion.configurar(amplitud, frecuencia);
 }
 
-QRectF Plataforma::rect() const
+void Plataforma::colocarEn(float nuevoX, float nuevoY)
 {
-    return QRectF(x, y, ancho, alto);
-}
-
-float Plataforma::getX() const
-{
-    return x;
-}
-
-float Plataforma::getY() const
-{
-    return y;
-}
-
-float Plataforma::getAncho() const
-{
-    return ancho;
-}
-
-float Plataforma::getAlto() const
-{
-    return alto;
+    xBase = nuevoX;
+    x = nuevoX;
+    y = nuevoY;
 }

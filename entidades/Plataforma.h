@@ -4,35 +4,29 @@
 #include <QPainter>
 #include <QRectF>
 #include <QPixmap>
+#include "Entidad.h"
+#include "../fisicas/ModelosFisicos.h"
 
-class Plataforma
+class Plataforma : public Entidad
 {
 private:
-    float x;
-    float y;
     float xBase;
-    float ancho;
-    float alto;
     float amplitud;
     float frecuencia;
     float tiempo;
+    ModeloOscilatorio oscilacion;
 
     QPixmap spritePlataforma;
 
 public:
     Plataforma();
 
-    void actualizar(float dt);
-    void dibujar(QPainter& painter);
+    void actualizar(float dt) override;
+    void dibujar(QPainter& painter) override;
 
     void configurarOscilacion(float nuevaAmplitud, float nuevaFrecuencia);
 
-    QRectF rect() const;
-
-    float getX() const;
-    float getY() const;
-    float getAncho() const;
-    float getAlto() const;
+    void colocarEn(float nuevoX, float nuevoY);
 };
 
 #endif

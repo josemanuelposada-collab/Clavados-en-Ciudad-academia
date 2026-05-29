@@ -6,6 +6,7 @@ NivelPiscinaEntrenamiento::NivelPiscinaEntrenamiento()
 {
     jugador = new Personaje();
     plataforma = new Plataforma();
+    dron = new DronVigilante(560.0f, 145.0f);
 
     piscina = QRectF(260, 480, 280, 75);
     zonaMeta = QRectF(350, 480, 100, 75);
@@ -30,6 +31,7 @@ NivelPiscinaEntrenamiento::NivelPiscinaEntrenamiento()
     vientoLateral = 0.0f;
     gravedad = 820.0f;
     errorEntrada = 0.0f;
+    tiempoNivel = 0.0f;
 
     dificultad.configurar(NORMAL);
     aplicarParametrosDificultad();
@@ -46,6 +48,7 @@ NivelPiscinaEntrenamiento::~NivelPiscinaEntrenamiento()
 {
     delete jugador;
     delete plataforma;
+    delete dron;
 }
 
 void NivelPiscinaEntrenamiento::aplicarParametrosDificultad()
@@ -70,6 +73,8 @@ void NivelPiscinaEntrenamiento::cambiarDificultad(TipoDificultad tipo)
 void NivelPiscinaEntrenamiento::actualizar(float dt)
 {
     plataforma->actualizar(dt);
+    dron->actualizar(dt, *jugador);
+    tiempoNivel += dt;
 
     if (!jugador->estaEnAire()) {
         jugador->colocarEn(
@@ -84,7 +89,13 @@ void NivelPiscinaEntrenamiento::actualizar(float dt)
         jugador->aplicarGravedad(gravedad);
 
         if (jugadorEnZonaViento) {
-            jugador->aplicarViento(vientoLateral);
+            float turbulencia = std::sin(tiempoNivel * 4.0f + jugador->getY() * 0.01f) * 12.0f;
+            jugador->aplicarViento(vientoLateral + turbulencia);
+        }
+
+        if (dron->rect().intersects(jugador->rect()) && jugador->estaEnAire()) {
+            jugador->aplicarViento(jugador->centro().x() < dron->centro().x() ? -180.0f : 180.0f);
+            jugador->setVY(jugador->getVY() + 45.0f);
         }
 
         jugador->actualizar(dt);
@@ -124,6 +135,7 @@ void NivelPiscinaEntrenamiento::verificarPiscina()
         if (puntaje >= dificultad.getPuntajeMinimo()) {
             intentoGanado = true;
             nivelSuperado = true;
+            dron->registrarAciertoJugador();
         }
         else {
             intentoGanado = false;
@@ -135,6 +147,7 @@ void NivelPiscinaEntrenamiento::verificarPiscina()
         }
 
         jugador->detenerMovimiento();
+        dron->aprender(errorEntrada);
     }
 }
 
@@ -314,6 +327,7 @@ void NivelPiscinaEntrenamiento::dibujar(QPainter& painter)
     painter.setPen(Qt::black);
 
     plataforma->dibujar(painter);
+    dron->dibujar(painter);
     jugador->dibujar(painter);
 
     if (intentoTerminado || nivelSuperado || nivelPerdido) {
@@ -405,6 +419,7 @@ void NivelPiscinaEntrenamiento::reiniciarIntento()
     intentoTerminado = false;
     intentoGanado = false;
     jugadorEnZonaViento = false;
+    dron->reiniciarMemoriaParcial();
 
     jugador->setEnAire(false);
     jugador->setVX(0.0f);
@@ -428,6 +443,8 @@ void NivelPiscinaEntrenamiento::reiniciarNivel()
     nivelSuperado = false;
     nivelPerdido = false;
     jugadorEnZonaViento = false;
+    tiempoNivel = 0.0f;
+    dron->reiniciarMemoriaParcial();
 
     intentosRestantes = dificultad.getIntentosMaximos();
 
@@ -446,4 +463,19 @@ void NivelPiscinaEntrenamiento::reiniciarNivel()
 int NivelPiscinaEntrenamiento::getPuntaje() const
 {
     return puntaje;
+}
+
+bool NivelPiscinaEntrenamiento::estaSuperado() const
+{
+    return nivelSuperado;
+}
+
+bool NivelPiscinaEntrenamiento::estaPerdido() const
+{
+    return nivelPerdido;
+}
+
+QString NivelPiscinaEntrenamiento::nombreNivel() const
+{
+    return "Piscina de entrenamiento";
 }

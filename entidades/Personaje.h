@@ -4,19 +4,16 @@
 #include <QPainter>
 #include <QRectF>
 #include <QPixmap>
+#include "Entidad.h"
 
-class Personaje
+class Personaje : public Entidad
 {
 private:
-    float x;
-    float y;
     float vx;
     float vy;
     float ax;
     float ay;
 
-    float ancho;
-    float alto;
     float masa;
 
     bool enAire;
@@ -39,8 +36,8 @@ private:
 public:
     Personaje();
 
-    void actualizar(float dt);
-    void dibujar(QPainter& painter);
+    void actualizar(float dt) override;
+    void dibujar(QPainter& painter) override;
 
     void saltar();
     void moverIzquierda(bool estado);
@@ -55,9 +52,6 @@ public:
 
     void detenerMovimiento();
     void colocarEn(float nuevoX, float nuevoY);
-
-    QRectF rect() const;
-    QPointF centro() const;
 
     float getX() const;
     float getY() const;
