@@ -25,6 +25,7 @@ private:
     QRectF suelo;
 
     QPixmap spritePiscina;
+    QPixmap spritePiscinaBase;
     QPixmap spriteViento;
     QPixmap spriteAdvertencia;
     QPixmap spriteTemporizador;

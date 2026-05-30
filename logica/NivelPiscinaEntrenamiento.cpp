@@ -34,6 +34,7 @@ NivelPiscinaEntrenamiento::NivelPiscinaEntrenamiento()
     suelo = QRectF(0, 550, 800, 50);
 
     spritePiscina.load(":/recursos/sprites/salpicadura_grande.png");
+    spritePiscinaBase.load(":/recursos/sprites/piscina_ciudad_academia.png");
     spriteViento.load(":/recursos/sprites/viento_lateral.png");
     spriteAdvertencia.load(":/recursos/sprites/advertencia.png");
     spriteTemporizador.load(":/recursos/sprites/temporizador.png");
@@ -324,23 +325,17 @@ void NivelPiscinaEntrenamiento::dibujar(QPainter& painter)
     painter.setBrush(QColor(255, 255, 0, 45));
     painter.drawRect(zonaMeta);
 
-    painter.setPen(Qt::black);
-    QLinearGradient aguaGradiente(piscina.topLeft(), piscina.bottomLeft());
-    aguaGradiente.setColorAt(0.0, QColor(60, 190, 255));
-    aguaGradiente.setColorAt(1.0, QColor(0, 80, 210));
+    if (!spritePiscinaBase.isNull()) {
+        painter.drawPixmap(QRect(224, 440, 352, 122), spritePiscinaBase);
+    }
+    else {
+        QLinearGradient aguaGradiente(piscina.topLeft(), piscina.bottomLeft());
+        aguaGradiente.setColorAt(0.0, QColor(60, 190, 255));
+        aguaGradiente.setColorAt(1.0, QColor(0, 80, 210));
 
-    painter.setPen(QPen(QColor(0, 60, 150), 2));
-    painter.setBrush(QBrush(aguaGradiente));
-    painter.drawRoundedRect(piscina, 8, 8);
-
-    painter.setPen(QPen(QColor(220, 250, 255), 2));
-    for (int i = 0; i < 5; i++) {
-        painter.drawLine(
-            piscina.x() + 20 + i * 45,
-            piscina.y() + 12,
-            piscina.x() + 50 + i * 45,
-            piscina.y() + 12
-            );
+        painter.setPen(QPen(QColor(0, 60, 150), 2));
+        painter.setBrush(QBrush(aguaGradiente));
+        painter.drawRoundedRect(piscina, 8, 8);
     }
 
     if (intentoTerminado && !spritePiscina.isNull()) {
