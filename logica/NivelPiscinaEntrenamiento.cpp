@@ -1,6 +1,26 @@
 #include "NivelPiscinaEntrenamiento.h"
+#include <algorithm>
 #include <cmath>
 #include <QLinearGradient>
+
+namespace {
+void dibujarPanel(QPainter& painter, const QRectF& rect, const QColor& color)
+{
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(color);
+    painter.drawRoundedRect(rect, 8, 8);
+}
+
+void dibujarBarra(QPainter& painter, const QRectF& rect, float porcentaje, const QColor& color)
+{
+    porcentaje = std::max(0.0f, std::min(1.0f, porcentaje));
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(QColor(255, 255, 255, 70));
+    painter.drawRoundedRect(rect, 5, 5);
+    painter.setBrush(color);
+    painter.drawRoundedRect(QRectF(rect.x(), rect.y(), rect.width() * porcentaje, rect.height()), 5, 5);
+}
+}
 
 NivelPiscinaEntrenamiento::NivelPiscinaEntrenamiento()
 {
@@ -243,34 +263,19 @@ void NivelPiscinaEntrenamiento::dibujar(QPainter& painter)
     painter.setBrush(QBrush(sueloGradiente));
     painter.drawRect(suelo);
 
-    painter.setPen(QColor(70, 160, 255));
-    painter.setBrush(QColor(170, 230, 255, 80));
-    painter.drawRect(zonaViento);
+    painter.setPen(QPen(QColor(255, 255, 255, 45), 2));
+    for (int i = 0; i < 8; ++i) {
+        int x = 70 + i * 95;
+        painter.drawLine(x, 430, x + 45, 550);
+    }
+
+    painter.setPen(QPen(QColor(150, 230, 255, 135), 2, Qt::DashLine));
+    painter.setBrush(QColor(170, 230, 255, jugadorEnZonaViento ? 78 : 34));
+    painter.drawRoundedRect(zonaViento, 10, 10);
 
     if (!spriteViento.isNull()) {
         painter.drawPixmap(QRect(300, 295, 160, 65), spriteViento);
     }
-
-    painter.setPen(Qt::black);
-    painter.drawText(20, 30, "Nivel 1: Piscina de entrenamiento");
-    painter.drawText(20, 55, "Espacio: saltar | A/D: mover | E: impulso | R: reiniciar");
-    painter.drawText(20, 80, "1 Facil | 2 Normal | 3 Dificil");
-
-    painter.drawText(20, 115, "Dificultad: " + dificultad.getNombre());
-    painter.drawText(20, 140, "Puntaje actual: " + QString::number(puntaje));
-    painter.drawText(20, 165, "Mejor puntaje: " + QString::number(mejorPuntaje));
-    painter.drawText(20, 190, "Puntaje minimo: " + QString::number(dificultad.getPuntajeMinimo()));
-    painter.drawText(20, 215, "Intentos restantes: " + QString::number(intentosRestantes));
-    painter.drawText(20, 240, "Error de entrada: " + QString::number(errorEntrada, 'f', 1));
-    painter.drawText(20, 265, "Viento: " + QString::number(vientoLateral));
-
-    if (jugadorEnZonaViento) {
-        painter.setPen(Qt::darkBlue);
-        painter.drawText(20, 290, "El personaje esta dentro de la zona de viento");
-    }
-
-    painter.setPen(Qt::black);
-    painter.drawText(20, 320, "Energia electromagnetica:");
 
     float porcentajeEnergia = 0.0f;
 
@@ -278,11 +283,42 @@ void NivelPiscinaEntrenamiento::dibujar(QPainter& painter)
         porcentajeEnergia = jugador->getEnergia() / jugador->getEnergiaMaxima();
     }
 
-    painter.setBrush(QBrush(Qt::white));
-    painter.drawRect(QRectF(20, 330, 150, 15));
+    dibujarPanel(painter, QRectF(18, 18, 286, 180), QColor(7, 18, 31, 185));
 
-    painter.setBrush(QBrush(QColor(255, 220, 60)));
-    painter.drawRect(QRectF(20, 330, 150 * porcentajeEnergia, 15));
+    QFont tituloHud = painter.font();
+    tituloHud.setPointSize(12);
+    tituloHud.setBold(true);
+    painter.setFont(tituloHud);
+    painter.setPen(QColor(238, 252, 255));
+    painter.drawText(34, 46, "Piscina de entrenamiento");
+
+    QFont textoHud = painter.font();
+    textoHud.setPointSize(8);
+    textoHud.setBold(false);
+    painter.setFont(textoHud);
+    painter.setPen(QColor(180, 226, 242));
+    painter.drawText(34, 70, "Espacio salto  |  A/D correccion  |  E impulso");
+
+    painter.setPen(QColor(255, 225, 95));
+    painter.drawText(34, 98, "Puntaje");
+    dibujarBarra(painter, QRectF(108, 88, 160, 12), puntaje / 100.0f, QColor(255, 225, 95));
+    painter.drawText(274, 99, QString::number(puntaje));
+
+    painter.setPen(QColor(120, 235, 255));
+    painter.drawText(34, 124, "Energia");
+    dibujarBarra(painter, QRectF(108, 114, 160, 12), porcentajeEnergia, QColor(120, 235, 255));
+
+    painter.setPen(QColor(222, 240, 250));
+    painter.drawText(34, 151, "Intentos: " + QString::number(intentosRestantes) +
+                               "   Minimo: " + QString::number(dificultad.getPuntajeMinimo()));
+    painter.drawText(34, 174, "Viento: " + QString::number(vientoLateral, 'f', 0) +
+                               "   Error: " + QString::number(errorEntrada, 'f', 1));
+
+    dibujarPanel(painter, QRectF(325, 18, 198, 60), QColor(255, 255, 255, 185));
+    painter.setPen(QColor(20, 38, 52));
+    painter.drawText(343, 42, "Dron: " + QString(dron->getEstado() == PATRULLA ? "patrulla" :
+                                                 dron->getEstado() == ESCANEO ? "escaneo" : "intercepta"));
+    painter.drawText(343, 64, jugadorEnZonaViento ? "Zona de viento activa" : "Trayectoria estable");
 
     painter.setPen(QColor(255, 255, 0));
     painter.setBrush(QColor(255, 255, 0, 45));
@@ -331,25 +367,32 @@ void NivelPiscinaEntrenamiento::dibujar(QPainter& painter)
     jugador->dibujar(painter);
 
     if (intentoTerminado || nivelSuperado || nivelPerdido) {
-        painter.setBrush(QBrush(Qt::white));
-        painter.setPen(Qt::black);
-        painter.drawRect(QRectF(205, 205, 410, 185));
+        dibujarPanel(painter, QRectF(196, 195, 430, 205), QColor(248, 252, 255, 240));
+
+        QFont resultado = painter.font();
+        resultado.setPointSize(14);
+        resultado.setBold(true);
+        painter.setFont(resultado);
+        painter.setPen(QColor(18, 38, 54));
 
         if (nivelSuperado) {
-            painter.drawText(270, 240, "NIVEL SUPERADO");
+            painter.drawText(QRectF(220, 225, 382, 30), Qt::AlignCenter, "NIVEL SUPERADO");
         }
         else if (nivelPerdido) {
-            painter.drawText(270, 240, "NIVEL FALLIDO");
+            painter.drawText(QRectF(220, 225, 382, 30), Qt::AlignCenter, "NIVEL FALLIDO");
         }
         else {
-            painter.drawText(270, 240, "Intento terminado");
+            painter.drawText(QRectF(220, 225, 382, 30), Qt::AlignCenter, "Intento terminado");
         }
 
-        painter.drawText(270, 270, "Puntaje obtenido: " + QString::number(puntaje));
-        painter.drawText(270, 295, "Puntaje minimo: " + QString::number(dificultad.getPuntajeMinimo()));
-        painter.drawText(270, 320, "Error de entrada: " + QString::number(errorEntrada, 'f', 1));
-        painter.drawText(270, 345, "Intentos restantes: " + QString::number(intentosRestantes));
-        painter.drawText(270, 370, "Presiona R para continuar/reiniciar");
+        resultado.setPointSize(9);
+        resultado.setBold(false);
+        painter.setFont(resultado);
+        painter.drawText(255, 275, "Puntaje obtenido: " + QString::number(puntaje));
+        painter.drawText(255, 302, "Puntaje minimo: " + QString::number(dificultad.getPuntajeMinimo()));
+        painter.drawText(255, 329, "Error de entrada: " + QString::number(errorEntrada, 'f', 1));
+        painter.drawText(255, 356, "Intentos restantes: " + QString::number(intentosRestantes));
+        painter.drawText(255, 383, "R reinicia  |  Enter avanza si superaste el nivel");
     }
 }
 

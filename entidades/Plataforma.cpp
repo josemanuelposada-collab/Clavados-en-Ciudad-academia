@@ -41,10 +41,6 @@ void Plataforma::dibujar(QPainter& painter)
         painter.drawRect(area);
     }
 
-    // Hitbox física de la plataforma. Luego puedes comentarla.
-    painter.setPen(QPen(QColor(255, 0, 0, 100), 1));
-    painter.setBrush(Qt::NoBrush);
-    painter.drawRect(area);
 }
 
 void Plataforma::configurarOscilacion(float nuevaAmplitud, float nuevaFrecuencia)

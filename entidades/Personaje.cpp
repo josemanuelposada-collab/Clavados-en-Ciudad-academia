@@ -126,10 +126,6 @@ void Personaje::dibujar(QPainter& painter)
         painter.setPen(Qt::black);
     }
 
-    // Para depurar colisiones. Luego lo puedes comentar.
-    painter.setPen(QPen(QColor(255, 0, 0, 120), 1));
-    painter.setBrush(Qt::NoBrush);
-    painter.drawRect(hitbox);
 }
 void Personaje::saltar()
 {
