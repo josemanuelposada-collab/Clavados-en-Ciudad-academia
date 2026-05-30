@@ -21,8 +21,12 @@ private:
     QSet<int> teclas;
     QPixmap spriteFondo;
     QPixmap spriteAlarma;
+    QPixmap spriteViento;
 
     Dificultad dificultad;
+    QRectF piscinaFinal;
+    QRectF zonaViento;
+    QRectF zonaVelocidad;
 
     int anillosRecolectados;
     int golpes;
@@ -30,6 +34,10 @@ private:
     float tiempoRestante;
     float tiempoTotal;
     float tiempoNivel;
+    float alturaMundo;
+    float camaraY;
+    float velocidadVertical;
+    float velocidadHorizontal;
     bool nivelSuperado;
     bool nivelPerdido;
 
@@ -54,6 +62,9 @@ private:
     void aplicarMovimientoJugador(float dt);
     void verificarInteracciones();
     void calcularPuntaje();
+    void actualizarCamara();
+    void dibujarEscenario(QPainter& painter);
+    void dibujarHud(QPainter& painter);
 };
 
 #endif
