@@ -46,6 +46,8 @@ NivelRutaAnillos::NivelRutaAnillos()
     dificultad.configurar(NORMAL);
     spriteAlarma.load(":/recursos/sprites/alarma.png");
     spriteViento.load(":/recursos/sprites/viento_turbulencia.png");
+    spritePiscinaFinal.load(":/recursos/sprites/piscina_ciudad_academia.png");
+    spriteColumnaTorre.load(":/recursos/sprites/torre_columna_luz.png");
     jugador->colocarEn(382.0f, 92.0f);
     jugador->setEnAire(true);
     jugador->setVY(120.0f);
@@ -226,10 +228,18 @@ void NivelRutaAnillos::dibujarEscenario(QPainter& painter)
     fondo.setColorAt(1.0, QColor(12, 35, 64));
     painter.fillRect(QRectF(0, camaraY, 800, 600), fondo);
 
-    painter.setPen(Qt::NoPen);
-    painter.setBrush(QColor(230, 246, 255, 38));
-    painter.drawRoundedRect(QRectF(54, 70, 92, alturaMundo - 130), 8, 8);
-    painter.drawRoundedRect(QRectF(654, 70, 92, alturaMundo - 130), 8, 8);
+    if (!spriteColumnaTorre.isNull()) {
+        for (int y = 72; y < alturaMundo - 120; y += 560) {
+            painter.drawPixmap(QRect(36, y, 128, 720), spriteColumnaTorre);
+            painter.drawPixmap(QRect(636, y, 128, 720), spriteColumnaTorre);
+        }
+    }
+    else {
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(QColor(230, 246, 255, 38));
+        painter.drawRoundedRect(QRectF(54, 70, 92, alturaMundo - 130), 8, 8);
+        painter.drawRoundedRect(QRectF(654, 70, 92, alturaMundo - 130), 8, 8);
+    }
 
     painter.setPen(QPen(QColor(230, 250, 255, 42), 2));
     for (int y = 120; y < alturaMundo - 80; y += 86) {
@@ -247,12 +257,17 @@ void NivelRutaAnillos::dibujarEscenario(QPainter& painter)
     painter.setBrush(QColor(255, 230, 95, 36));
     painter.drawRoundedRect(zonaVelocidad, 12, 12);
 
-    QLinearGradient agua(piscinaFinal.topLeft(), piscinaFinal.bottomLeft());
-    agua.setColorAt(0.0, QColor(95, 225, 255));
-    agua.setColorAt(1.0, QColor(0, 94, 190));
-    painter.setPen(QPen(QColor(210, 250, 255), 2));
-    painter.setBrush(agua);
-    painter.drawRoundedRect(piscinaFinal, 10, 10);
+    if (!spritePiscinaFinal.isNull()) {
+        painter.drawPixmap(QRect(205, static_cast<int>(piscinaFinal.y() - 38), 390, 134), spritePiscinaFinal);
+    }
+    else {
+        QLinearGradient agua(piscinaFinal.topLeft(), piscinaFinal.bottomLeft());
+        agua.setColorAt(0.0, QColor(95, 225, 255));
+        agua.setColorAt(1.0, QColor(0, 94, 190));
+        painter.setPen(QPen(QColor(210, 250, 255), 2));
+        painter.setBrush(agua);
+        painter.drawRoundedRect(piscinaFinal, 10, 10);
+    }
     painter.setPen(QColor(255, 255, 255));
     painter.drawText(QRectF(piscinaFinal.x(), piscinaFinal.y() + 24, piscinaFinal.width(), 28), Qt::AlignCenter, "Piscina final");
 

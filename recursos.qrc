@@ -25,8 +25,10 @@
         <file>recursos/sprites/plataforma_alta.png</file>
         <file>recursos/sprites/plataforma_baja.png</file>
         <file>recursos/sprites/plataforma_media.png</file>
+        <file>recursos/sprites/piscina_ciudad_academia.png</file>
         <file>recursos/sprites/salpicadura_grande.png</file>
         <file>recursos/sprites/temporizador.png</file>
+        <file>recursos/sprites/torre_columna_luz.png</file>
         <file>recursos/sprites/velocidad_derecha.png</file>
         <file>recursos/sprites/velocidad_izquierda.png</file>
         <file>recursos/sprites/viento_lateral.png</file>
