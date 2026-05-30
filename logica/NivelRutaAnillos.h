@@ -22,6 +22,8 @@ private:
     QPixmap spriteFondo;
     QPixmap spriteAlarma;
     QPixmap spriteViento;
+    QPixmap spritePiscinaFinal;
+    QPixmap spriteColumnaTorre;
 
     Dificultad dificultad;
     QRectF piscinaFinal;
