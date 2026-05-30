@@ -127,6 +127,13 @@ void DronVigilante::reiniciarMemoriaParcial()
     tiempoDecision = 0.0f;
 }
 
+void DronVigilante::colocarEn(float nuevoX, float nuevoY)
+{
+    xBase = nuevoX;
+    x = nuevoX;
+    y = nuevoY;
+}
+
 float DronVigilante::calcularPresionDificultad() const
 {
     if (memoriaErrores.isEmpty()) {

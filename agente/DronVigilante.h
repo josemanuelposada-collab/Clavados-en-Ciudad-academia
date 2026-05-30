@@ -49,6 +49,7 @@ public:
     void aprender(float errorEntrada);
     void registrarAciertoJugador();
     void reiniciarMemoriaParcial();
+    void colocarEn(float nuevoX, float nuevoY);
 
     float calcularPresionDificultad() const;
     EstadoDron getEstado() const;
