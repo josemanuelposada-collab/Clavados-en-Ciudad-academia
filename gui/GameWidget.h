@@ -6,6 +6,14 @@
 #include <QKeyEvent>
 #include <QVector>
 #include "../logica/NivelJuego.h"
+#include "../logica/Dificultad.h"
+
+enum EstadoPantalla
+{
+    PANTALLA_INICIO,
+    PANTALLA_JUGANDO,
+    PANTALLA_PAUSA
+};
 
 class GameWidget : public QWidget
 {
@@ -16,10 +24,19 @@ private:
     QVector<NivelJuego*> niveles;
     int nivelActual;
     bool mostrarAyuda;
+    EstadoPantalla estadoPantalla;
+    TipoDificultad dificultadSeleccionada;
 
     NivelJuego* nivel();
     void cargarNiveles();
     void avanzarNivel();
+    void aplicarDificultadSeleccionada();
+    void iniciarPartida();
+    void reiniciarCampania();
+    void configurarLienzo(QPainter& painter);
+    void dibujarInicio(QPainter& painter);
+    void dibujarPausa(QPainter& painter);
+    void dibujarMarcoJuego(QPainter& painter);
 
 public:
     explicit GameWidget(QWidget* parent = nullptr);
