@@ -188,6 +188,31 @@ void GameWidget::dibujarPausa(QPainter& painter)
     painter.drawText(QRectF(250, 320, 300, 24), Qt::AlignCenter, "M: volver al inicio");
 }
 
+void GameWidget::dibujarCampaniaCompletada(QPainter& painter)
+{
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(QColor(0, 0, 0, 135));
+    painter.drawRect(QRectF(0, 0, 800, 600));
+
+    painter.setBrush(QColor(246, 252, 255, 242));
+    painter.drawRoundedRect(QRectF(170, 160, 460, 235), 12, 12);
+
+    QFont fuente = painter.font();
+    fuente.setPointSize(20);
+    fuente.setBold(true);
+    painter.setFont(fuente);
+    painter.setPen(QColor(12, 36, 56));
+    painter.drawText(QRectF(190, 198, 420, 48), Qt::AlignCenter, "CAMPANA COMPLETADA");
+
+    fuente.setPointSize(10);
+    fuente.setBold(false);
+    painter.setFont(fuente);
+    painter.setPen(QColor(30, 55, 72));
+    painter.drawText(QRectF(220, 260, 360, 28), Qt::AlignCenter, "Mikoto supero la piscina de entrenamiento y la torre experimental.");
+    painter.drawText(QRectF(220, 298, 360, 28), Qt::AlignCenter, "R: repetir nivel final    M: volver al inicio");
+    painter.drawText(QRectF(220, 326, 360, 28), Qt::AlignCenter, "Tab: revisar otro nivel    F11: pantalla completa");
+}
+
 void GameWidget::dibujarMarcoJuego(QPainter& painter)
 {
     painter.setPen(Qt::NoPen);
@@ -205,7 +230,7 @@ void GameWidget::dibujarMarcoJuego(QPainter& painter)
     fuente.setBold(false);
     painter.setFont(fuente);
     painter.setPen(QColor(190, 230, 245));
-    painter.drawText(610, 82, "H ayuda  |  F11 pantalla");
+    painter.drawText(610, 82, "H ayuda  |  M menu");
 
     if (nivel()->estaSuperado() && nivelActual < niveles.size() - 1) {
         painter.setBrush(QColor(255, 225, 95));
@@ -218,11 +243,17 @@ void GameWidget::dibujarMarcoJuego(QPainter& painter)
     if (mostrarAyuda) {
         painter.setBrush(QColor(5, 12, 22, 178));
         painter.setPen(Qt::NoPen);
-        painter.drawRoundedRect(QRectF(500, 500, 280, 76), 8, 8);
+        painter.drawRoundedRect(QRectF(470, 486, 310, 92), 8, 8);
         painter.setPen(Qt::white);
-        painter.drawText(520, 526, "Objetivo: superar ambos niveles.");
-        painter.drawText(520, 550, "Dificultad: 1 / 2 / 3. Pausa: Esc.");
+        painter.drawText(490, 512, "Objetivo: superar ambos niveles.");
+        painter.drawText(490, 536, "1/2/3 dificultad. Esc pausa. M menu.");
+        painter.drawText(490, 560, "Tab permite revisar niveles para demo.");
     }
+}
+
+bool GameWidget::campaniaCompletada()
+{
+    return nivelActual == niveles.size() - 1 && nivel()->estaSuperado();
 }
 
 void GameWidget::actualizar()
@@ -259,6 +290,10 @@ void GameWidget::paintEvent(QPaintEvent* event)
 
         nivel()->dibujar(painter);
         dibujarMarcoJuego(painter);
+
+        if (campaniaCompletada()) {
+            dibujarCampaniaCompletada(painter);
+        }
 
         if (estadoPantalla == PANTALLA_PAUSA) {
             dibujarPausa(painter);
@@ -313,6 +348,11 @@ void GameWidget::keyPressEvent(QKeyEvent* event)
         else if (event->key() == Qt::Key_M) {
             reiniciarCampania();
         }
+        return;
+    }
+
+    if (event->key() == Qt::Key_M) {
+        reiniciarCampania();
         return;
     }
 

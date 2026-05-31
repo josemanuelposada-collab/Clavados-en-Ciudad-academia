@@ -37,6 +37,8 @@ private:
     void dibujarInicio(QPainter& painter);
     void dibujarPausa(QPainter& painter);
     void dibujarMarcoJuego(QPainter& painter);
+    void dibujarCampaniaCompletada(QPainter& painter);
+    bool campaniaCompletada();
 
 public:
     explicit GameWidget(QWidget* parent = nullptr);
