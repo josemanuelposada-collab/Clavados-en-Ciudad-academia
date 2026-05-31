@@ -26,6 +26,7 @@ private:
     QPixmap spriteColumnaTorre;
 
     Dificultad dificultad;
+    QVector<EventoSonidoJuego> eventosSonido;
     QRectF piscinaFinal;
     QRectF zonaViento;
     QRectF zonaVelocidad;
@@ -55,6 +56,7 @@ public:
     bool estaSuperado() const override;
     bool estaPerdido() const override;
     QString nombreNivel() const override;
+    QVector<EventoSonidoJuego> consumirEventosSonido() override;
 
     void cambiarDificultad(TipoDificultad tipo);
 

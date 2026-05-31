@@ -31,6 +31,7 @@ private:
     QPixmap spriteTemporizador;
 
     Dificultad dificultad;
+    QVector<EventoSonidoJuego> eventosSonido;
 
     int puntaje;
     int mejorPuntaje;
@@ -74,6 +75,7 @@ public:
     bool estaSuperado() const override;
     bool estaPerdido() const override;
     QString nombreNivel() const override;
+    QVector<EventoSonidoJuego> consumirEventosSonido() override;
 };
 
 #endif

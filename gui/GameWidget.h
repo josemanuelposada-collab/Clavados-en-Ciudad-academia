@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QTimer>
 #include <QKeyEvent>
+#include <QSoundEffect>
 #include <QVector>
 #include "../logica/NivelJuego.h"
 #include "../logica/Dificultad.h"
@@ -26,13 +27,22 @@ private:
     bool mostrarAyuda;
     EstadoPantalla estadoPantalla;
     TipoDificultad dificultadSeleccionada;
+    QSoundEffect* sonidoFondo;
+    QSoundEffect* sonidoSalto;
+    QSoundEffect* sonidoAnillo;
+    QSoundEffect* sonidoColision;
+    QSoundEffect* sonidoAgua;
+    QSoundEffect* sonidoNivel;
 
     NivelJuego* nivel();
     void cargarNiveles();
+    void cargarSonidos();
     void avanzarNivel();
     void aplicarDificultadSeleccionada();
     void iniciarPartida();
     void reiniciarCampania();
+    void reproducirEventoSonido(EventoSonidoJuego evento);
+    void procesarSonidosNivel();
     void configurarLienzo(QPainter& painter);
     void dibujarInicio(QPainter& painter);
     void dibujarPausa(QPainter& painter);

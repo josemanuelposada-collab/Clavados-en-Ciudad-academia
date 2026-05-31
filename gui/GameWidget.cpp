@@ -2,6 +2,7 @@
 #include <QPainter>
 #include <QApplication>
 #include <QLinearGradient>
+#include <QUrl>
 #include <algorithm>
 #include "../logica/NivelPiscinaEntrenamiento.h"
 #include "../logica/NivelRutaAnillos.h"
@@ -18,12 +19,19 @@ GameWidget::GameWidget(QWidget* parent)
       nivelActual(0),
       mostrarAyuda(true),
       estadoPantalla(PANTALLA_INICIO),
-      dificultadSeleccionada(NORMAL)
+      dificultadSeleccionada(NORMAL),
+      sonidoFondo(nullptr),
+      sonidoSalto(nullptr),
+      sonidoAnillo(nullptr),
+      sonidoColision(nullptr),
+      sonidoAgua(nullptr),
+      sonidoNivel(nullptr)
 {
     setFocusPolicy(Qt::StrongFocus);
     setMinimumSize(800, 600);
 
     cargarNiveles();
+    cargarSonidos();
 
     timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &GameWidget::actualizar);
@@ -52,12 +60,40 @@ void GameWidget::cargarNiveles()
     niveles.push_back(new NivelRutaAnillos());
 }
 
+void GameWidget::cargarSonidos()
+{
+    sonidoFondo = new QSoundEffect(this);
+    sonidoFondo->setSource(QUrl("qrc:/recursos/audio/fondo_entrenamiento.wav"));
+    sonidoFondo->setLoopCount(QSoundEffect::Infinite);
+    sonidoFondo->setVolume(0.18f);
+
+    sonidoSalto = new QSoundEffect(this);
+    sonidoSalto->setSource(QUrl("qrc:/recursos/audio/salto_impulso.wav"));
+    sonidoSalto->setVolume(0.55f);
+
+    sonidoAnillo = new QSoundEffect(this);
+    sonidoAnillo->setSource(QUrl("qrc:/recursos/audio/anillo_bonus.wav"));
+    sonidoAnillo->setVolume(0.50f);
+
+    sonidoColision = new QSoundEffect(this);
+    sonidoColision->setSource(QUrl("qrc:/recursos/audio/colision_alerta.wav"));
+    sonidoColision->setVolume(0.48f);
+
+    sonidoAgua = new QSoundEffect(this);
+    sonidoAgua->setSource(QUrl("qrc:/recursos/audio/entrada_agua.wav"));
+    sonidoAgua->setVolume(0.55f);
+
+    sonidoNivel = new QSoundEffect(this);
+    sonidoNivel->setSource(QUrl("qrc:/recursos/audio/nivel_superado.wav"));
+    sonidoNivel->setVolume(0.52f);
+}
+
 void GameWidget::avanzarNivel()
 {
     if (nivel()->estaSuperado() && nivelActual < niveles.size() - 1) {
         nivelActual++;
         nivel()->reiniciarNivel();
-        QApplication::beep();
+        reproducirEventoSonido(SONIDO_NIVEL);
     }
 }
 
@@ -82,6 +118,10 @@ void GameWidget::iniciarPartida()
     nivelActual = 0;
     estadoPantalla = PANTALLA_JUGANDO;
     mostrarAyuda = false;
+    if (sonidoFondo != nullptr && !sonidoFondo->isPlaying()) {
+        sonidoFondo->play();
+    }
+    reproducirEventoSonido(SONIDO_NIVEL);
 }
 
 void GameWidget::reiniciarCampania()
@@ -92,6 +132,41 @@ void GameWidget::reiniciarCampania()
 
     nivelActual = 0;
     estadoPantalla = PANTALLA_INICIO;
+    if (sonidoFondo != nullptr) {
+        sonidoFondo->stop();
+    }
+}
+
+void GameWidget::reproducirEventoSonido(EventoSonidoJuego evento)
+{
+    QSoundEffect* efecto = nullptr;
+
+    if (evento == SONIDO_SALTO) {
+        efecto = sonidoSalto;
+    }
+    else if (evento == SONIDO_ANILLO) {
+        efecto = sonidoAnillo;
+    }
+    else if (evento == SONIDO_COLISION) {
+        efecto = sonidoColision;
+    }
+    else if (evento == SONIDO_AGUA) {
+        efecto = sonidoAgua;
+    }
+    else if (evento == SONIDO_NIVEL) {
+        efecto = sonidoNivel;
+    }
+
+    if (efecto != nullptr) {
+        efecto->play();
+    }
+}
+
+void GameWidget::procesarSonidosNivel()
+{
+    for (EventoSonidoJuego evento : nivel()->consumirEventosSonido()) {
+        reproducirEventoSonido(evento);
+    }
 }
 
 void GameWidget::configurarLienzo(QPainter& painter)
@@ -265,6 +340,7 @@ void GameWidget::actualizar()
         }
 
         nivel()->actualizar(0.016f);
+        procesarSonidosNivel();
     }
     catch (const JuegoException&) {
         QApplication::beep();
@@ -338,6 +414,12 @@ void GameWidget::keyPressEvent(QKeyEvent* event)
 
     if (event->key() == Qt::Key_Escape) {
         estadoPantalla = estadoPantalla == PANTALLA_PAUSA ? PANTALLA_JUGANDO : PANTALLA_PAUSA;
+        if (estadoPantalla == PANTALLA_PAUSA && sonidoFondo != nullptr) {
+            sonidoFondo->setVolume(0.08f);
+        }
+        else if (sonidoFondo != nullptr) {
+            sonidoFondo->setVolume(0.18f);
+        }
         return;
     }
 
@@ -359,7 +441,7 @@ void GameWidget::keyPressEvent(QKeyEvent* event)
     if (event->key() == Qt::Key_Tab) {
         nivelActual = (nivelActual + 1) % niveles.size();
         niveles[nivelActual]->reiniciarNivel();
-        QApplication::beep();
+        reproducirEventoSonido(SONIDO_NIVEL);
         return;
     }
 

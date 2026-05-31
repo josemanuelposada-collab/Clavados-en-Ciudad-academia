@@ -175,6 +175,7 @@ void NivelRutaAnillos::verificarInteracciones()
             anillo->recolectar();
             anillosRecolectados++;
             dron->aprender(35.0f);
+            eventosSonido.push_back(SONIDO_ANILLO);
         }
     }
 
@@ -186,6 +187,7 @@ void NivelRutaAnillos::verificarInteracciones()
             velocidadVertical = std::max(120.0f, velocidadVertical * 0.72f);
             dron->aprender(165.0f);
             jugador->colocarEn(std::clamp(jugador->getX() + 55.0f, 45.0f, 720.0f), jugador->getY() - 35.0f);
+            eventosSonido.push_back(SONIDO_COLISION);
             return;
         }
     }
@@ -194,14 +196,17 @@ void NivelRutaAnillos::verificarInteracciones()
         golpes++;
         tiempoRestante = std::max(0.0f, tiempoRestante - 3.0f);
         velocidadHorizontal += jugador->centro().x() < dron->centro().x() ? -160.0f : 160.0f;
+        eventosSonido.push_back(SONIDO_COLISION);
     }
 
     if (piscinaFinal.intersects(jugador->rect())) {
         calcularPuntaje();
         nivelSuperado = puntaje >= 55;
         nivelPerdido = !nivelSuperado;
+        eventosSonido.push_back(SONIDO_AGUA);
         if (nivelSuperado) {
             dron->registrarAciertoJugador();
+            eventosSonido.push_back(SONIDO_NIVEL);
         }
     }
 }
@@ -429,4 +434,11 @@ bool NivelRutaAnillos::estaPerdido() const
 QString NivelRutaAnillos::nombreNivel() const
 {
     return "Torre experimental";
+}
+
+QVector<EventoSonidoJuego> NivelRutaAnillos::consumirEventosSonido()
+{
+    QVector<EventoSonidoJuego> eventos = eventosSonido;
+    eventosSonido.clear();
+    return eventos;
 }

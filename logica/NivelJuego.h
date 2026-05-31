@@ -3,6 +3,16 @@
 
 #include <QPainter>
 #include <QString>
+#include <QVector>
+
+enum EventoSonidoJuego
+{
+    SONIDO_SALTO,
+    SONIDO_ANILLO,
+    SONIDO_COLISION,
+    SONIDO_AGUA,
+    SONIDO_NIVEL
+};
 
 class NivelJuego
 {
@@ -17,6 +27,7 @@ public:
     virtual bool estaSuperado() const = 0;
     virtual bool estaPerdido() const = 0;
     virtual QString nombreNivel() const = 0;
+    virtual QVector<EventoSonidoJuego> consumirEventosSonido() = 0;
 };
 
 #endif
