@@ -54,11 +54,13 @@ classDiagram
         +dibujar(QPainter painter)*
         +teclaPresionada(int)*
         +reiniciarNivel()*
+        +consumirEventosSonido() QVector
     }
 
     class NivelPiscinaEntrenamiento
     class NivelRutaAnillos
     class GameWidget
+    class EventoSonidoJuego
     class Dificultad
     class ModeloFisico
     class ModeloOscilatorio
@@ -77,6 +79,8 @@ classDiagram
     ModeloFisico <|-- ModeloImpulso
 
     GameWidget o-- NivelJuego
+    GameWidget ..> EventoSonidoJuego
+    NivelJuego ..> EventoSonidoJuego
     NivelPiscinaEntrenamiento o-- Personaje
     NivelPiscinaEntrenamiento o-- Plataforma
     NivelPiscinaEntrenamiento o-- DronVigilante
@@ -95,3 +99,4 @@ classDiagram
 - Contenedores: `NivelRutaAnillos` usa `std::vector` para anillos y obstaculos; `DronVigilante` usa `QVector` como memoria de aprendizaje.
 - Fisicas: gravedad/parabola, viento/turbulencia, friccion, impulso electromagnetico y oscilacion senoidal.
 - Agente inteligente: el dron separa percepcion, razonamiento, accion y aprendizaje.
+- Sonido: cada nivel emite eventos (`salto`, `anillo`, `colision`, `agua`, `nivel`) y `GameWidget` los reproduce con `QSoundEffect`.
