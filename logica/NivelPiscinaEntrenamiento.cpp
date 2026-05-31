@@ -157,6 +157,7 @@ void NivelPiscinaEntrenamiento::verificarPiscina()
             intentoGanado = true;
             nivelSuperado = true;
             dron->registrarAciertoJugador();
+            eventosSonido.push_back(SONIDO_NIVEL);
         }
         else {
             intentoGanado = false;
@@ -169,6 +170,7 @@ void NivelPiscinaEntrenamiento::verificarPiscina()
 
         jugador->detenerMovimiento();
         dron->aprender(errorEntrada);
+        eventosSonido.push_back(SONIDO_AGUA);
     }
 }
 
@@ -189,6 +191,7 @@ void NivelPiscinaEntrenamiento::verificarSuelo()
         }
 
         jugador->detenerMovimiento();
+        eventosSonido.push_back(SONIDO_COLISION);
     }
 }
 
@@ -394,6 +397,9 @@ void NivelPiscinaEntrenamiento::dibujar(QPainter& painter)
 void NivelPiscinaEntrenamiento::teclaPresionada(int tecla)
 {
     if (tecla == Qt::Key_Space) {
+        if (!jugador->estaEnAire()) {
+            eventosSonido.push_back(SONIDO_SALTO);
+        }
         jugador->saltar();
     }
 
@@ -516,4 +522,11 @@ bool NivelPiscinaEntrenamiento::estaPerdido() const
 QString NivelPiscinaEntrenamiento::nombreNivel() const
 {
     return "Piscina de entrenamiento";
+}
+
+QVector<EventoSonidoJuego> NivelPiscinaEntrenamiento::consumirEventosSonido()
+{
+    QVector<EventoSonidoJuego> eventos = eventosSonido;
+    eventosSonido.clear();
+    return eventos;
 }
