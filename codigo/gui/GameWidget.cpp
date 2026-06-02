@@ -9,8 +9,11 @@
 #include "../logica/JuegoException.h"
 
 namespace {
-const float ANCHO_BASE = 800.0f;
-const float ALTO_BASE = 600.0f;
+const float ANCHO_BASE = 1280.0f;
+const float ALTO_BASE = 720.0f;
+const float ANCHO_MUNDO = 800.0f;
+const float ALTO_MUNDO = 600.0f;
+const float ESCALA_MUNDO = 1.2f;
 }
 
 GameWidget::GameWidget(QWidget* parent)
@@ -28,7 +31,8 @@ GameWidget::GameWidget(QWidget* parent)
       sonidoNivel(nullptr)
 {
     setFocusPolicy(Qt::StrongFocus);
-    setMinimumSize(800, 600);
+    setMinimumSize(960, 540);
+    resize(1280, 720);
 
     cargarNiveles();
     cargarSonidos();
@@ -181,143 +185,147 @@ void GameWidget::configurarLienzo(QPainter& painter)
 
 void GameWidget::dibujarInicio(QPainter& painter)
 {
-    QLinearGradient fondo(0, 0, 800, 600);
+    QLinearGradient fondo(0, 0, 1280, 720);
     fondo.setColorAt(0.0, QColor(14, 28, 55));
     fondo.setColorAt(0.45, QColor(27, 111, 145));
     fondo.setColorAt(1.0, QColor(11, 20, 42));
-    painter.fillRect(QRectF(0, 0, 800, 600), fondo);
+    painter.fillRect(QRectF(0, 0, ANCHO_BASE, ALTO_BASE), fondo);
 
     painter.setPen(QPen(QColor(150, 230, 255, 70), 2));
-    for (int i = 0; i < 12; ++i) {
-        int y = 85 + i * 38;
-        painter.drawLine(0, y, 800, y + (i % 2 == 0 ? 18 : -18));
+    for (int i = 0; i < 14; ++i) {
+        int y = 70 + i * 42;
+        painter.drawLine(0, y, 1280, y + (i % 2 == 0 ? 24 : -24));
     }
 
     painter.setPen(Qt::NoPen);
     painter.setBrush(QColor(255, 255, 255, 24));
-    painter.drawRoundedRect(QRectF(92, 76, 616, 392), 14, 14);
+    painter.drawRoundedRect(QRectF(245, 88, 790, 450), 14, 14);
     painter.setBrush(QColor(8, 18, 34, 185));
-    painter.drawRoundedRect(QRectF(112, 96, 576, 352), 12, 12);
+    painter.drawRoundedRect(QRectF(270, 112, 740, 402), 12, 12);
 
     QFont titulo = painter.font();
-    titulo.setPointSize(25);
+    titulo.setPointSize(32);
     titulo.setBold(true);
     painter.setFont(titulo);
     painter.setPen(QColor(235, 252, 255));
-    painter.drawText(QRectF(135, 125, 530, 70), Qt::AlignCenter, "Clavados en Ciudad Academia");
+    painter.drawText(QRectF(310, 152, 660, 78), Qt::AlignCenter, "Clavados en Ciudad Academia");
 
     QFont subtitulo = painter.font();
-    subtitulo.setPointSize(11);
+    subtitulo.setPointSize(13);
     subtitulo.setBold(false);
     painter.setFont(subtitulo);
     painter.setPen(QColor(190, 235, 255));
-    painter.drawText(QRectF(155, 198, 490, 48), Qt::AlignCenter,
+    painter.drawText(QRectF(350, 246, 580, 54), Qt::AlignCenter,
                      "Mikoto entrena en piscinas experimentales con viento artificial, anillos y un dron supervisor adaptativo.");
 
     QString dificultad = dificultadSeleccionada == FACIL ? "Facil" : dificultadSeleccionada == NORMAL ? "Normal" : "Dificil";
     painter.setPen(QColor(255, 225, 95));
-    painter.drawText(QRectF(185, 270, 430, 34), Qt::AlignCenter, "Dificultad seleccionada: " + dificultad);
+    painter.drawText(QRectF(400, 330, 480, 34), Qt::AlignCenter, "Dificultad seleccionada: " + dificultad);
 
     painter.setPen(Qt::NoPen);
     painter.setBrush(QColor(255, 225, 95));
-    painter.drawRoundedRect(QRectF(265, 320, 270, 46), 8, 8);
+    painter.drawRoundedRect(QRectF(490, 390, 300, 54), 8, 8);
     painter.setPen(QColor(20, 28, 36));
     QFont boton = painter.font();
-    boton.setPointSize(13);
+    boton.setPointSize(14);
     boton.setBold(true);
     painter.setFont(boton);
-    painter.drawText(QRectF(265, 320, 270, 46), Qt::AlignCenter, "ENTER  INICIAR");
+    painter.drawText(QRectF(490, 390, 300, 54), Qt::AlignCenter, "ENTER  INICIAR");
 
     QFont ayuda = painter.font();
-    ayuda.setPointSize(9);
+    ayuda.setPointSize(10);
     ayuda.setBold(false);
     painter.setFont(ayuda);
     painter.setPen(QColor(222, 245, 255));
-    painter.drawText(QRectF(135, 392, 530, 22), Qt::AlignCenter, "1 Facil   2 Normal   3 Dificil   F11 Pantalla completa");
-    painter.drawText(QRectF(135, 420, 530, 22), Qt::AlignCenter, "Controles: Espacio/WASD/Flechas, E impulso, R reiniciar, Esc pausa");
+    painter.drawText(QRectF(330, 468, 620, 24), Qt::AlignCenter, "1 Facil   2 Normal   3 Dificil   F11 Pantalla completa");
+    painter.drawText(QRectF(330, 498, 620, 24), Qt::AlignCenter, "Controles: Espacio/WASD/Flechas, E impulso, R reiniciar, Esc pausa");
 }
 
 void GameWidget::dibujarPausa(QPainter& painter)
 {
     painter.setPen(Qt::NoPen);
     painter.setBrush(QColor(0, 0, 0, 145));
-    painter.drawRect(QRectF(0, 0, 800, 600));
+    painter.drawRect(QRectF(0, 0, ANCHO_BASE, ALTO_BASE));
     painter.setBrush(QColor(245, 250, 255, 235));
-    painter.drawRoundedRect(QRectF(230, 205, 340, 160), 10, 10);
+    painter.drawRoundedRect(QRectF(455, 245, 370, 170), 10, 10);
     painter.setPen(QColor(18, 32, 44));
     QFont fuente = painter.font();
     fuente.setPointSize(18);
     fuente.setBold(true);
     painter.setFont(fuente);
-    painter.drawText(QRectF(230, 230, 340, 45), Qt::AlignCenter, "PAUSA");
+    painter.drawText(QRectF(455, 270, 370, 45), Qt::AlignCenter, "PAUSA");
 
     fuente.setPointSize(10);
     fuente.setBold(false);
     painter.setFont(fuente);
-    painter.drawText(QRectF(250, 292, 300, 24), Qt::AlignCenter, "Enter/Esc: continuar");
-    painter.drawText(QRectF(250, 320, 300, 24), Qt::AlignCenter, "M: volver al inicio");
+    painter.drawText(QRectF(485, 334, 310, 24), Qt::AlignCenter, "Enter/Esc: continuar");
+    painter.drawText(QRectF(485, 362, 310, 24), Qt::AlignCenter, "M: volver al inicio");
 }
 
 void GameWidget::dibujarCampaniaCompletada(QPainter& painter)
 {
     painter.setPen(Qt::NoPen);
     painter.setBrush(QColor(0, 0, 0, 135));
-    painter.drawRect(QRectF(0, 0, 800, 600));
+    painter.drawRect(QRectF(0, 0, ANCHO_BASE, ALTO_BASE));
 
     painter.setBrush(QColor(246, 252, 255, 242));
-    painter.drawRoundedRect(QRectF(170, 160, 460, 235), 12, 12);
+    painter.drawRoundedRect(QRectF(390, 210, 500, 245), 12, 12);
 
     QFont fuente = painter.font();
     fuente.setPointSize(20);
     fuente.setBold(true);
     painter.setFont(fuente);
     painter.setPen(QColor(12, 36, 56));
-    painter.drawText(QRectF(190, 198, 420, 48), Qt::AlignCenter, "CAMPANA COMPLETADA");
+    painter.drawText(QRectF(420, 248, 440, 48), Qt::AlignCenter, "CAMPANA COMPLETADA");
 
     fuente.setPointSize(10);
     fuente.setBold(false);
     painter.setFont(fuente);
     painter.setPen(QColor(30, 55, 72));
-    painter.drawText(QRectF(220, 260, 360, 28), Qt::AlignCenter, "Mikoto supero la piscina de entrenamiento y la torre experimental.");
-    painter.drawText(QRectF(220, 298, 360, 28), Qt::AlignCenter, "R: repetir nivel final    M: volver al inicio");
-    painter.drawText(QRectF(220, 326, 360, 28), Qt::AlignCenter, "Tab: revisar otro nivel    F11: pantalla completa");
+    painter.drawText(QRectF(435, 315, 410, 28), Qt::AlignCenter, "Mikoto supero la piscina de entrenamiento y la torre experimental.");
+    painter.drawText(QRectF(435, 353, 410, 28), Qt::AlignCenter, "R: repetir nivel final    M: volver al inicio");
+    painter.drawText(QRectF(435, 381, 410, 28), Qt::AlignCenter, "Tab: revisar otro nivel    F11: pantalla completa");
 }
 
 void GameWidget::dibujarMarcoJuego(QPainter& painter)
 {
     painter.setPen(Qt::NoPen);
-    painter.setBrush(QColor(5, 12, 22, 150));
-    painter.drawRoundedRect(QRectF(592, 14, 188, 84), 8, 8);
+    painter.setBrush(QColor(6, 14, 27));
+    painter.drawRect(QRectF(960, 0, 320, 720));
+    painter.setBrush(QColor(13, 30, 47));
+    painter.drawRoundedRect(QRectF(986, 28, 248, 136), 8, 8);
 
     painter.setPen(QColor(240, 252, 255));
     QFont fuente = painter.font();
-    fuente.setPointSize(8);
+    fuente.setPointSize(11);
     fuente.setBold(true);
     painter.setFont(fuente);
-    painter.drawText(610, 35, "Nivel " + QString::number(nivelActual + 1) + "/" + QString::number(niveles.size()));
-    painter.drawText(610, 58, nivel()->nombreNivel());
+    painter.drawText(1010, 62, "Nivel " + QString::number(nivelActual + 1) + "/" + QString::number(niveles.size()));
+    painter.drawText(1010, 92, nivel()->nombreNivel());
 
     fuente.setBold(false);
     painter.setFont(fuente);
     painter.setPen(QColor(190, 230, 245));
-    painter.drawText(610, 82, "H ayuda  |  M menu");
+    painter.drawText(1010, 124, "H ayuda  |  M menu");
+    painter.drawText(1010, 148, "F11 pantalla completa");
 
     if (nivel()->estaSuperado() && nivelActual < static_cast<int>(niveles.size()) - 1) {
         painter.setBrush(QColor(255, 225, 95));
         painter.setPen(Qt::NoPen);
-        painter.drawRoundedRect(QRectF(565, 110, 205, 34), 7, 7);
+        painter.drawRoundedRect(QRectF(986, 188, 248, 42), 7, 7);
         painter.setPen(QColor(15, 25, 35));
-        painter.drawText(QRectF(565, 110, 205, 34), Qt::AlignCenter, "Enter: siguiente nivel");
+        painter.drawText(QRectF(986, 188, 248, 42), Qt::AlignCenter, "Enter: siguiente nivel");
     }
 
     if (mostrarAyuda) {
-        painter.setBrush(QColor(5, 12, 22, 178));
+        painter.setBrush(QColor(18, 40, 60));
         painter.setPen(Qt::NoPen);
-        painter.drawRoundedRect(QRectF(470, 486, 310, 92), 8, 8);
+        painter.drawRoundedRect(QRectF(986, 480, 248, 150), 8, 8);
         painter.setPen(Qt::white);
-        painter.drawText(490, 512, "Objetivo: superar ambos niveles.");
-        painter.drawText(490, 536, "1/2/3 dificultad. Esc pausa. M menu.");
-        painter.drawText(490, 560, "Tab permite revisar niveles para demo.");
+        painter.drawText(1010, 512, "Objetivo:");
+        painter.drawText(1010, 538, "Superar ambos niveles.");
+        painter.drawText(1010, 566, "1/2/3 dificultad.");
+        painter.drawText(1010, 594, "Esc pausa. Tab demo.");
     }
 }
 
@@ -359,7 +367,12 @@ void GameWidget::paintEvent(QPaintEvent* event)
             return;
         }
 
+        painter.fillRect(QRectF(0, 0, ANCHO_BASE, ALTO_BASE), QColor(8, 12, 22));
+        painter.save();
+        painter.scale(ESCALA_MUNDO, ESCALA_MUNDO);
+        painter.setClipRect(QRectF(0, 0, ANCHO_MUNDO, ALTO_MUNDO));
         nivel()->dibujar(painter);
+        painter.restore();
         dibujarMarcoJuego(painter);
 
         if (campaniaCompletada()) {
@@ -371,7 +384,7 @@ void GameWidget::paintEvent(QPaintEvent* event)
         }
     }
     catch (const JuegoException& error) {
-        painter.fillRect(QRectF(0, 0, 800, 600), QColor(25, 25, 25));
+        painter.fillRect(QRectF(0, 0, ANCHO_BASE, ALTO_BASE), QColor(25, 25, 25));
         painter.setPen(Qt::white);
         painter.drawText(60, 80, "Error del juego:");
         painter.drawText(60, 110, error.what());
