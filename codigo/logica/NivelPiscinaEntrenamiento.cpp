@@ -23,11 +23,10 @@ void dibujarBarra(QPainter& painter, const QRectF& rect, float porcentaje, const
 }
 
 NivelPiscinaEntrenamiento::NivelPiscinaEntrenamiento()
+    : jugador(std::make_unique<Personaje>()),
+      plataforma(std::make_unique<Plataforma>()),
+      dron(std::make_unique<DronVigilante>(560.0f, 145.0f))
 {
-    jugador = new Personaje();
-    plataforma = new Plataforma();
-    dron = new DronVigilante(560.0f, 145.0f);
-
     piscina = QRectF(260, 480, 280, 75);
     zonaMeta = QRectF(350, 480, 100, 75);
     zonaViento = QRectF(170, 270, 420, 140);
@@ -65,12 +64,7 @@ NivelPiscinaEntrenamiento::NivelPiscinaEntrenamiento()
         );
 }
 
-NivelPiscinaEntrenamiento::~NivelPiscinaEntrenamiento()
-{
-    delete jugador;
-    delete plataforma;
-    delete dron;
-}
+NivelPiscinaEntrenamiento::~NivelPiscinaEntrenamiento() = default;
 
 void NivelPiscinaEntrenamiento::aplicarParametrosDificultad()
 {

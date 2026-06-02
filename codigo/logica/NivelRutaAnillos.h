@@ -8,15 +8,16 @@
 #include "../agente/DronVigilante.h"
 #include <QPixmap>
 #include <QSet>
+#include <memory>
 #include <vector>
 
 class NivelRutaAnillos : public NivelJuego
 {
 private:
-    Personaje* jugador;
-    DronVigilante* dron;
-    std::vector<Anillo*> anillos;
-    std::vector<Obstaculo*> obstaculos;
+    std::unique_ptr<Personaje> jugador;
+    std::unique_ptr<DronVigilante> dron;
+    std::vector<std::unique_ptr<Anillo>> anillos;
+    std::vector<std::unique_ptr<Obstaculo>> obstaculos;
 
     QSet<int> teclas;
     QPixmap spriteFondo;

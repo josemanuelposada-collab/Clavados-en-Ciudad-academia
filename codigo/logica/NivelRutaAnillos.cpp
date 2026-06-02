@@ -25,8 +25,8 @@ void barra(QPainter& painter, const QRectF& rect, float porcentaje, const QColor
 }
 
 NivelRutaAnillos::NivelRutaAnillos()
-    : jugador(new Personaje()),
-      dron(new DronVigilante(385.0f, 160.0f)),
+    : jugador(std::make_unique<Personaje>()),
+      dron(std::make_unique<DronVigilante>(385.0f, 160.0f)),
       piscinaFinal(250.0f, 1510.0f, 300.0f, 78.0f),
       zonaViento(76.0f, 410.0f, 648.0f, 230.0f),
       zonaVelocidad(96.0f, 870.0f, 608.0f, 170.0f),
@@ -54,27 +54,22 @@ NivelRutaAnillos::NivelRutaAnillos()
     crearEntidades();
 }
 
-NivelRutaAnillos::~NivelRutaAnillos()
-{
-    liberarEntidades();
-    delete jugador;
-    delete dron;
-}
+NivelRutaAnillos::~NivelRutaAnillos() = default;
 
 void NivelRutaAnillos::crearEntidades()
 {
-    anillos.push_back(new Anillo(386.0f, 245.0f));
-    anillos.push_back(new Anillo(175.0f, 455.0f));
-    anillos.push_back(new Anillo(575.0f, 645.0f));
-    anillos.push_back(new Anillo(300.0f, 850.0f));
-    anillos.push_back(new Anillo(525.0f, 1080.0f));
-    anillos.push_back(new Anillo(382.0f, 1310.0f));
+    anillos.emplace_back(std::make_unique<Anillo>(386.0f, 245.0f));
+    anillos.emplace_back(std::make_unique<Anillo>(175.0f, 455.0f));
+    anillos.emplace_back(std::make_unique<Anillo>(575.0f, 645.0f));
+    anillos.emplace_back(std::make_unique<Anillo>(300.0f, 850.0f));
+    anillos.emplace_back(std::make_unique<Anillo>(525.0f, 1080.0f));
+    anillos.emplace_back(std::make_unique<Anillo>(382.0f, 1310.0f));
 
     float factor = dificultad.getVelocidadPlataforma();
-    obstaculos.push_back(new Obstaculo(130.0f, 360.0f, 54.0f, 54.0f, 76.0f * factor, 0.0f, BOYA));
-    obstaculos.push_back(new Obstaculo(575.0f, 585.0f, 58.0f, 58.0f, -92.0f * factor, 0.0f, BARRIL));
-    obstaculos.push_back(new Obstaculo(210.0f, 810.0f, 54.0f, 54.0f, 105.0f * factor, 0.0f, MINA));
-    obstaculos.push_back(new Obstaculo(560.0f, 1190.0f, 56.0f, 56.0f, -115.0f * factor, 0.0f, BLOQUEO));
+    obstaculos.emplace_back(std::make_unique<Obstaculo>(130.0f, 360.0f, 54.0f, 54.0f, 76.0f * factor, 0.0f, BOYA));
+    obstaculos.emplace_back(std::make_unique<Obstaculo>(575.0f, 585.0f, 58.0f, 58.0f, -92.0f * factor, 0.0f, BARRIL));
+    obstaculos.emplace_back(std::make_unique<Obstaculo>(210.0f, 810.0f, 54.0f, 54.0f, 105.0f * factor, 0.0f, MINA));
+    obstaculos.emplace_back(std::make_unique<Obstaculo>(560.0f, 1190.0f, 56.0f, 56.0f, -115.0f * factor, 0.0f, BLOQUEO));
 
     if (anillos.empty() || obstaculos.empty()) {
         throw JuegoException("La torre experimental no pudo crear sus entidades.");
@@ -83,14 +78,7 @@ void NivelRutaAnillos::crearEntidades()
 
 void NivelRutaAnillos::liberarEntidades()
 {
-    for (Anillo* anillo : anillos) {
-        delete anillo;
-    }
     anillos.clear();
-
-    for (Obstaculo* obstaculo : obstaculos) {
-        delete obstaculo;
-    }
     obstaculos.clear();
 }
 
@@ -105,11 +93,11 @@ void NivelRutaAnillos::actualizar(float dt)
 
     aplicarMovimientoJugador(dt);
 
-    for (Anillo* anillo : anillos) {
+    for (const auto& anillo : anillos) {
         anillo->actualizar(dt);
     }
 
-    for (Obstaculo* obstaculo : obstaculos) {
+    for (const auto& obstaculo : obstaculos) {
         obstaculo->actualizar(dt);
         obstaculo->rebotarHorizontal(76.0f, 724.0f);
     }
@@ -170,7 +158,7 @@ void NivelRutaAnillos::aplicarMovimientoJugador(float dt)
 
 void NivelRutaAnillos::verificarInteracciones()
 {
-    for (Anillo* anillo : anillos) {
+    for (const auto& anillo : anillos) {
         if (!anillo->estaRecolectado() && anillo->rect().intersects(jugador->rect())) {
             anillo->recolectar();
             anillosRecolectados++;
@@ -179,7 +167,7 @@ void NivelRutaAnillos::verificarInteracciones()
         }
     }
 
-    for (Obstaculo* obstaculo : obstaculos) {
+    for (const auto& obstaculo : obstaculos) {
         if (obstaculo->rect().intersects(jugador->rect())) {
             golpes++;
             tiempoRestante = std::max(0.0f, tiempoRestante - 2.5f);
@@ -276,11 +264,11 @@ void NivelRutaAnillos::dibujarEscenario(QPainter& painter)
     painter.setPen(QColor(255, 255, 255));
     painter.drawText(QRectF(piscinaFinal.x(), piscinaFinal.y() + 24, piscinaFinal.width(), 28), Qt::AlignCenter, "Piscina final");
 
-    for (Anillo* anillo : anillos) {
+    for (const auto& anillo : anillos) {
         anillo->dibujar(painter);
     }
 
-    for (Obstaculo* obstaculo : obstaculos) {
+    for (const auto& obstaculo : obstaculos) {
         obstaculo->dibujar(painter);
     }
 

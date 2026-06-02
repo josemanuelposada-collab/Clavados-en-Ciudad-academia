@@ -5,6 +5,7 @@
 #include <QKeyEvent>
 #include <QPixmap>
 #include <QRectF>
+#include <memory>
 
 #include "../entidades/Personaje.h"
 #include "../entidades/Plataforma.h"
@@ -15,9 +16,9 @@
 class NivelPiscinaEntrenamiento : public NivelJuego
 {
 private:
-    Personaje* jugador;
-    Plataforma* plataforma;
-    DronVigilante* dron;
+    std::unique_ptr<Personaje> jugador;
+    std::unique_ptr<Plataforma> plataforma;
+    std::unique_ptr<DronVigilante> dron;
 
     QRectF piscina;
     QRectF zonaViento;

@@ -5,7 +5,8 @@
 #include <QTimer>
 #include <QKeyEvent>
 #include <QSoundEffect>
-#include <QVector>
+#include <memory>
+#include <vector>
 #include "../logica/NivelJuego.h"
 #include "../logica/Dificultad.h"
 
@@ -22,7 +23,7 @@ class GameWidget : public QWidget
 
 private:
     QTimer* timer;
-    QVector<NivelJuego*> niveles;
+    std::vector<std::unique_ptr<NivelJuego>> niveles;
     int nivelActual;
     bool mostrarAyuda;
     EstadoPantalla estadoPantalla;

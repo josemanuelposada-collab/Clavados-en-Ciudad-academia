@@ -38,26 +38,21 @@ GameWidget::GameWidget(QWidget* parent)
     timer->start(16);
 }
 
-GameWidget::~GameWidget()
-{
-    for (NivelJuego* nivelJuego : niveles) {
-        delete nivelJuego;
-    }
-}
+GameWidget::~GameWidget() = default;
 
 NivelJuego* GameWidget::nivel()
 {
-    if (niveles.isEmpty()) {
+    if (niveles.empty()) {
         throw JuegoException("No hay niveles cargados.");
     }
 
-    return niveles[nivelActual];
+    return niveles[nivelActual].get();
 }
 
 void GameWidget::cargarNiveles()
 {
-    niveles.push_back(new NivelPiscinaEntrenamiento());
-    niveles.push_back(new NivelRutaAnillos());
+    niveles.push_back(std::make_unique<NivelPiscinaEntrenamiento>());
+    niveles.push_back(std::make_unique<NivelRutaAnillos>());
 }
 
 void GameWidget::cargarSonidos()
@@ -90,7 +85,7 @@ void GameWidget::cargarSonidos()
 
 void GameWidget::avanzarNivel()
 {
-    if (nivel()->estaSuperado() && nivelActual < niveles.size() - 1) {
+    if (nivel()->estaSuperado() && nivelActual < static_cast<int>(niveles.size()) - 1) {
         nivelActual++;
         nivel()->reiniciarNivel();
         reproducirEventoSonido(SONIDO_NIVEL);
@@ -99,13 +94,13 @@ void GameWidget::avanzarNivel()
 
 void GameWidget::aplicarDificultadSeleccionada()
 {
-    for (NivelJuego* nivelJuego : niveles) {
-        NivelPiscinaEntrenamiento* piscina = dynamic_cast<NivelPiscinaEntrenamiento*>(nivelJuego);
+    for (const auto& nivelJuego : niveles) {
+        NivelPiscinaEntrenamiento* piscina = dynamic_cast<NivelPiscinaEntrenamiento*>(nivelJuego.get());
         if (piscina != nullptr) {
             piscina->cambiarDificultad(dificultadSeleccionada);
         }
 
-        NivelRutaAnillos* ruta = dynamic_cast<NivelRutaAnillos*>(nivelJuego);
+        NivelRutaAnillos* ruta = dynamic_cast<NivelRutaAnillos*>(nivelJuego.get());
         if (ruta != nullptr) {
             ruta->cambiarDificultad(dificultadSeleccionada);
         }
@@ -126,7 +121,7 @@ void GameWidget::iniciarPartida()
 
 void GameWidget::reiniciarCampania()
 {
-    for (NivelJuego* nivelJuego : niveles) {
+    for (const auto& nivelJuego : niveles) {
         nivelJuego->reiniciarNivel();
     }
 
@@ -307,7 +302,7 @@ void GameWidget::dibujarMarcoJuego(QPainter& painter)
     painter.setPen(QColor(190, 230, 245));
     painter.drawText(610, 82, "H ayuda  |  M menu");
 
-    if (nivel()->estaSuperado() && nivelActual < niveles.size() - 1) {
+    if (nivel()->estaSuperado() && nivelActual < static_cast<int>(niveles.size()) - 1) {
         painter.setBrush(QColor(255, 225, 95));
         painter.setPen(Qt::NoPen);
         painter.drawRoundedRect(QRectF(565, 110, 205, 34), 7, 7);
@@ -328,7 +323,7 @@ void GameWidget::dibujarMarcoJuego(QPainter& painter)
 
 bool GameWidget::campaniaCompletada()
 {
-    return nivelActual == niveles.size() - 1 && nivel()->estaSuperado();
+    return nivelActual == static_cast<int>(niveles.size()) - 1 && nivel()->estaSuperado();
 }
 
 void GameWidget::actualizar()
