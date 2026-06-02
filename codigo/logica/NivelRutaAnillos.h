@@ -25,6 +25,8 @@ private:
     QPixmap spriteViento;
     QPixmap spritePiscinaFinal;
     QPixmap spriteColumnaTorre;
+    QPixmap spriteBanderines;
+    QPixmap spriteEdificio;
 
     Dificultad dificultad;
     QVector<EventoSonidoJuego> eventosSonido;

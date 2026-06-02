@@ -38,6 +38,12 @@ NivelPiscinaEntrenamiento::NivelPiscinaEntrenamiento()
     spriteViento.load(":/recursos/sprites/viento_lateral.png");
     spriteAdvertencia.load(":/recursos/sprites/advertencia.png");
     spriteTemporizador.load(":/recursos/sprites/temporizador.png");
+    spriteFondoCiudad.load(":/recursos/sprites/fondo_ciudad_academia.png");
+    spriteGradas.load(":/recursos/sprites/gradas_academia.png");
+    spriteCarriles.load(":/recursos/sprites/carriles_piscina.png");
+    spriteBanderines.load(":/recursos/sprites/banderines_academia.png");
+    spriteEdificio.load(":/recursos/sprites/edificio_cristal_academia.png");
+    spriteBrilloAgua.load(":/recursos/sprites/brillo_agua.png");
 
     puntaje = 0;
     mejorPuntaje = 0;
@@ -239,12 +245,21 @@ void NivelPiscinaEntrenamiento::calcularPuntajePorEntrada()
 
 void NivelPiscinaEntrenamiento::dibujar(QPainter& painter)
 {
-    QLinearGradient cielo(0, 0, 0, 600);
-    cielo.setColorAt(0.0, QColor(170, 220, 255));
-    cielo.setColorAt(0.7, QColor(90, 190, 235));
-    cielo.setColorAt(1.0, QColor(40, 140, 200));
+    if (!spriteFondoCiudad.isNull()) {
+        painter.drawPixmap(QRect(0, 0, 800, 600), spriteFondoCiudad);
+        painter.fillRect(QRectF(0, 0, 800, 600), QColor(8, 26, 42, 78));
+    }
+    else {
+        QLinearGradient cielo(0, 0, 0, 600);
+        cielo.setColorAt(0.0, QColor(170, 220, 255));
+        cielo.setColorAt(0.7, QColor(90, 190, 235));
+        cielo.setColorAt(1.0, QColor(40, 140, 200));
+        painter.fillRect(QRectF(0, 0, 800, 600), cielo);
+    }
 
-    painter.fillRect(QRectF(0, 0, 800, 600), cielo);
+    if (!spriteEdificio.isNull()) {
+        painter.drawPixmap(QRect(540, 96, 192, 120), spriteEdificio);
+    }
 
     QLinearGradient aguaFondo(0, 410, 0, 550);
     aguaFondo.setColorAt(0.0, QColor(90, 210, 255));
@@ -253,6 +268,14 @@ void NivelPiscinaEntrenamiento::dibujar(QPainter& painter)
     painter.setPen(Qt::NoPen);
     painter.setBrush(QBrush(aguaFondo));
     painter.drawRect(QRectF(0, 410, 800, 140));
+
+    if (!spriteCarriles.isNull()) {
+        painter.drawPixmap(QRect(110, 420, 560, 126), spriteCarriles);
+    }
+
+    if (!spriteBrilloAgua.isNull()) {
+        painter.drawPixmap(QRect(250, 465, 360, 118), spriteBrilloAgua);
+    }
 
     QLinearGradient sueloGradiente(suelo.topLeft(), suelo.bottomLeft());
     sueloGradiente.setColorAt(0.0, QColor(40, 190, 90));
@@ -266,6 +289,14 @@ void NivelPiscinaEntrenamiento::dibujar(QPainter& painter)
     for (int i = 0; i < 8; ++i) {
         int x = 70 + i * 95;
         painter.drawLine(x, 430, x + 45, 550);
+    }
+
+    if (!spriteGradas.isNull()) {
+        painter.drawPixmap(QRect(60, 318, 265, 92), spriteGradas);
+    }
+
+    if (!spriteBanderines.isNull()) {
+        painter.drawPixmap(QRect(70, 218, 360, 74), spriteBanderines);
     }
 
     painter.setPen(QPen(QColor(150, 230, 255, 135), 2, Qt::DashLine));

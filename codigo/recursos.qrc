@@ -12,9 +12,15 @@
         <file>recursos/sprites/anillo_brillante.png</file>
         <file>recursos/sprites/anillo_dorado.png</file>
         <file>recursos/sprites/bloqueo.png</file>
+        <file>recursos/sprites/banderines_academia.png</file>
+        <file>recursos/sprites/brillo_agua.png</file>
+        <file>recursos/sprites/carriles_piscina.png</file>
         <file>recursos/sprites/dron_alerta.png</file>
         <file>recursos/sprites/dron_escaneo.png</file>
         <file>recursos/sprites/dron_normal.png</file>
+        <file>recursos/sprites/edificio_cristal_academia.png</file>
+        <file>recursos/sprites/fondo_ciudad_academia.png</file>
+        <file>recursos/sprites/gradas_academia.png</file>
         <file>recursos/sprites/obstaculo_barril.png</file>
         <file>recursos/sprites/obstaculo_boya.png</file>
         <file>recursos/sprites/obstaculo_caja.png</file>
