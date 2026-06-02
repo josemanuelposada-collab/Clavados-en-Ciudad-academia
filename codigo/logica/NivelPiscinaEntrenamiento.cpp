@@ -1,4 +1,5 @@
 #include "NivelPiscinaEntrenamiento.h"
+#include "../render/SpriteCache.h"
 #include <algorithm>
 #include <cmath>
 #include <QLinearGradient>
@@ -343,10 +344,7 @@ void NivelPiscinaEntrenamiento::dibujar(QPainter& painter)
             90
             );
 
-        painter.drawPixmap(
-            splashRect,
-            spritePiscina.scaled(140, 90, Qt::KeepAspectRatio, Qt::SmoothTransformation)
-            );
+        SpriteCache::dibujarAjustado(painter, spritePiscina, splashRect, "salpicadura");
     }
 
     painter.setPen(Qt::white);

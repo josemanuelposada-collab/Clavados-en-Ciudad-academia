@@ -1,4 +1,5 @@
 #include "Obstaculo.h"
+#include "../render/SpriteCache.h"
 #include <cmath>
 
 Obstaculo::Obstaculo(float xInicial, float yInicial, float anchoInicial, float altoInicial,
@@ -33,7 +34,7 @@ void Obstaculo::dibujar(QPainter& painter)
     QRect area = rect().toRect();
 
     if (!sprite.isNull()) {
-        painter.drawPixmap(area, sprite.scaled(area.size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        SpriteCache::dibujarAjustado(painter, sprite, area, "obstaculo");
     }
     else {
         painter.setPen(Qt::black);

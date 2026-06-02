@@ -1,4 +1,5 @@
 #include "Personaje.h"
+#include "../render/SpriteCache.h"
 
 Personaje::Personaje()
     : Entidad(120.0f, 300.0f, 34.0f, 68.0f)
@@ -105,10 +106,7 @@ void Personaje::dibujar(QPainter& painter)
             spriteH
             );
 
-        painter.drawPixmap(
-            destino,
-            spriteActual.scaled(spriteW, spriteH, Qt::KeepAspectRatio, Qt::SmoothTransformation)
-            );
+        SpriteCache::dibujarAjustado(painter, spriteActual, destino, "personaje");
     }
     else {
         painter.setPen(Qt::black);
