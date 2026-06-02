@@ -73,6 +73,8 @@ CMakeLists.txt.user*
 # --------
 *.dll
 *.exe
+!/archivos/entrega/
+!/archivos/entrega/ClavadosCiudadAcademia.exe
 
 # Directories with generated files
 .moc/

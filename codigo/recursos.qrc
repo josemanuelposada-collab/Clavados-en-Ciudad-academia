@@ -1,0 +1,43 @@
+<RCC>
+    <qresource prefix="/">
+        <file>recursos/audio/anillo_bonus.wav</file>
+        <file>recursos/audio/colision_alerta.wav</file>
+        <file>recursos/audio/entrada_agua.wav</file>
+        <file>recursos/audio/fondo_entrenamiento.wav</file>
+        <file>recursos/audio/nivel_superado.wav</file>
+        <file>recursos/audio/salto_impulso.wav</file>
+        <file>recursos/sprites/advertencia.png</file>
+        <file>recursos/sprites/alarma.png</file>
+        <file>recursos/sprites/anillo_azul.png</file>
+        <file>recursos/sprites/anillo_brillante.png</file>
+        <file>recursos/sprites/anillo_dorado.png</file>
+        <file>recursos/sprites/bloqueo.png</file>
+        <file>recursos/sprites/dron_alerta.png</file>
+        <file>recursos/sprites/dron_escaneo.png</file>
+        <file>recursos/sprites/dron_normal.png</file>
+        <file>recursos/sprites/obstaculo_barril.png</file>
+        <file>recursos/sprites/obstaculo_boya.png</file>
+        <file>recursos/sprites/obstaculo_caja.png</file>
+        <file>recursos/sprites/obstaculo_mina.png</file>
+        <file>recursos/sprites/peligro_electrico.png</file>
+        <file>recursos/sprites/personaje_caida.png</file>
+        <file>recursos/sprites/personaje_entrada_agua.png</file>
+        <file>recursos/sprites/personaje_idle.png</file>
+        <file>recursos/sprites/personaje_impulso.png</file>
+        <file>recursos/sprites/personaje_lateral_der.png</file>
+        <file>recursos/sprites/personaje_lateral_izq.png</file>
+        <file>recursos/sprites/personaje_salto.png</file>
+        <file>recursos/sprites/personaje_splash.png</file>
+        <file>recursos/sprites/plataforma_alta.png</file>
+        <file>recursos/sprites/plataforma_baja.png</file>
+        <file>recursos/sprites/plataforma_media.png</file>
+        <file>recursos/sprites/piscina_ciudad_academia.png</file>
+        <file>recursos/sprites/salpicadura_grande.png</file>
+        <file>recursos/sprites/temporizador.png</file>
+        <file>recursos/sprites/torre_columna_luz.png</file>
+        <file>recursos/sprites/velocidad_derecha.png</file>
+        <file>recursos/sprites/velocidad_izquierda.png</file>
+        <file>recursos/sprites/viento_lateral.png</file>
+        <file>recursos/sprites/viento_turbulencia.png</file>
+    </qresource>
+</RCC>
