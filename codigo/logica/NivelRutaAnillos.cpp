@@ -48,6 +48,9 @@ NivelRutaAnillos::NivelRutaAnillos()
     spriteViento.load(":/recursos/sprites/viento_turbulencia.png");
     spritePiscinaFinal.load(":/recursos/sprites/piscina_ciudad_academia.png");
     spriteColumnaTorre.load(":/recursos/sprites/torre_columna_luz.png");
+    spriteFondo.load(":/recursos/sprites/fondo_ciudad_academia.png");
+    spriteBanderines.load(":/recursos/sprites/banderines_academia.png");
+    spriteEdificio.load(":/recursos/sprites/edificio_cristal_academia.png");
     jugador->colocarEn(382.0f, 92.0f);
     jugador->setEnAire(true);
     jugador->setVY(120.0f);
@@ -215,11 +218,25 @@ void NivelRutaAnillos::actualizarCamara()
 
 void NivelRutaAnillos::dibujarEscenario(QPainter& painter)
 {
-    QLinearGradient fondo(0, camaraY, 0, camaraY + 600);
-    fondo.setColorAt(0.0, QColor(18, 40, 74));
-    fondo.setColorAt(0.55, QColor(28, 125, 166));
-    fondo.setColorAt(1.0, QColor(12, 35, 64));
-    painter.fillRect(QRectF(0, camaraY, 800, 600), fondo);
+    if (!spriteFondo.isNull()) {
+        painter.drawPixmap(QRect(0, static_cast<int>(camaraY), 800, 600), spriteFondo);
+        painter.fillRect(QRectF(0, camaraY, 800, 600), QColor(6, 20, 36, 112));
+    }
+    else {
+        QLinearGradient fondo(0, camaraY, 0, camaraY + 600);
+        fondo.setColorAt(0.0, QColor(18, 40, 74));
+        fondo.setColorAt(0.55, QColor(28, 125, 166));
+        fondo.setColorAt(1.0, QColor(12, 35, 64));
+        painter.fillRect(QRectF(0, camaraY, 800, 600), fondo);
+    }
+
+    if (!spriteEdificio.isNull()) {
+        painter.drawPixmap(QRect(516, static_cast<int>(camaraY + 36.0f), 240, 150), spriteEdificio);
+    }
+
+    if (!spriteBanderines.isNull()) {
+        painter.drawPixmap(QRect(172, static_cast<int>(camaraY + 22.0f), 420, 84), spriteBanderines);
+    }
 
     if (!spriteColumnaTorre.isNull()) {
         for (int y = 72; y < alturaMundo - 120; y += 560) {

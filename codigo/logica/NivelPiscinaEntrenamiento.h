@@ -30,6 +30,12 @@ private:
     QPixmap spriteViento;
     QPixmap spriteAdvertencia;
     QPixmap spriteTemporizador;
+    QPixmap spriteFondoCiudad;
+    QPixmap spriteGradas;
+    QPixmap spriteCarriles;
+    QPixmap spriteBanderines;
+    QPixmap spriteEdificio;
+    QPixmap spriteBrilloAgua;
 
     Dificultad dificultad;
     QVector<EventoSonidoJuego> eventosSonido;
