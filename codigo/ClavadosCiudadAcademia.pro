@@ -11,6 +11,7 @@ SOURCES += \
     entidades/Plataforma.cpp \
     fisicas/ModelosFisicos.cpp \
     gui/GameWidget.cpp \
+    render/SpriteCache.cpp \
     logica/Dificultad.cpp \
     logica/NivelRutaAnillos.cpp \
     logica/NivelPiscinaEntrenamiento.cpp \
@@ -26,6 +27,7 @@ HEADERS += \
     entidades/Plataforma.h \
     fisicas/ModelosFisicos.h \
     gui/GameWidget.h \
+    render/SpriteCache.h \
     logica/Dificultad.h \
     logica/JuegoException.h \
     logica/NivelJuego.h \

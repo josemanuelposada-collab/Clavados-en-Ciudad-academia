@@ -1,4 +1,5 @@
 #include "DronVigilante.h"
+#include "../render/SpriteCache.h"
 #include <algorithm>
 #include <cmath>
 
@@ -47,7 +48,7 @@ void DronVigilante::dibujar(QPainter& painter)
 
     QRect area = rect().toRect();
     if (!sprite.isNull()) {
-        painter.drawPixmap(area, sprite.scaled(area.size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        SpriteCache::dibujarAjustado(painter, sprite, area, "dron");
     }
     else {
         painter.setPen(Qt::black);
