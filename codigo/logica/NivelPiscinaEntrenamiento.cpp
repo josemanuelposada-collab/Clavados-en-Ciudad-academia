@@ -9,17 +9,22 @@ void dibujarPanel(QPainter& painter, const QRectF& rect, const QColor& color)
 {
     painter.setPen(Qt::NoPen);
     painter.setBrush(color);
-    painter.drawRoundedRect(rect, 8, 8);
+    painter.drawRect(rect);
+    painter.setBrush(QColor(255, 225, 95, 180));
+    painter.drawRect(QRectF(rect.x(), rect.y(), 5, rect.height()));
+    painter.setPen(QPen(QColor(120, 230, 255, 80), 1));
+    painter.drawLine(rect.topLeft(), rect.topRight());
+    painter.drawLine(rect.bottomLeft(), rect.bottomRight());
 }
 
 void dibujarBarra(QPainter& painter, const QRectF& rect, float porcentaje, const QColor& color)
 {
     porcentaje = std::max(0.0f, std::min(1.0f, porcentaje));
     painter.setPen(Qt::NoPen);
-    painter.setBrush(QColor(255, 255, 255, 70));
-    painter.drawRoundedRect(rect, 5, 5);
+    painter.setBrush(QColor(255, 255, 255, 52));
+    painter.drawRect(rect);
     painter.setBrush(color);
-    painter.drawRoundedRect(QRectF(rect.x(), rect.y(), rect.width() * porcentaje, rect.height()), 5, 5);
+    painter.drawRect(QRectF(rect.x(), rect.y(), rect.width() * porcentaje, rect.height()));
 }
 }
 
@@ -28,10 +33,12 @@ NivelPiscinaEntrenamiento::NivelPiscinaEntrenamiento()
       plataforma(std::make_unique<Plataforma>()),
       dron(std::make_unique<DronVigilante>(560.0f, 145.0f))
 {
-    piscina = QRectF(260, 480, 280, 75);
-    zonaMeta = QRectF(350, 480, 100, 75);
-    zonaViento = QRectF(170, 270, 420, 140);
-    suelo = QRectF(0, 550, 800, 50);
+    alturaMundo = 4200.0f;
+    camaraY = 0.0f;
+    piscina = QRectF(220, 3890, 360, 105);
+    zonaMeta = QRectF(340, 3890, 120, 105);
+    zonaViento = QRectF(110, 1050, 580, 1680);
+    suelo = QRectF(0, 4108, 800, 92);
 
     spritePiscina.load(":/recursos/sprites/salpicadura_grande.png");
     spritePiscinaBase.load(":/recursos/sprites/piscina_ciudad_academia.png");
@@ -44,10 +51,17 @@ NivelPiscinaEntrenamiento::NivelPiscinaEntrenamiento()
     spriteBanderines.load(":/recursos/sprites/banderines_academia.png");
     spriteEdificio.load(":/recursos/sprites/edificio_cristal_academia.png");
     spriteBrilloAgua.load(":/recursos/sprites/brillo_agua.png");
+    spritePiscinaPremium.load(":/recursos/sprites/piscina_final_premium.png");
+    spriteAguaProfunda.load(":/recursos/sprites/agua_profunda.png");
+    spriteChapuzonLimpio.load(":/recursos/sprites/chapuzon_limpio.png");
+    spriteChapuzonMedio.load(":/recursos/sprites/chapuzon_medio.png");
+    spriteChapuzonFuerte.load(":/recursos/sprites/chapuzon_fuerte.png");
+    spriteBurbujas.load(":/recursos/sprites/burbujas_entrada.png");
 
     puntaje = 0;
     mejorPuntaje = 0;
     intentosRestantes = 0;
+    monedasRecolectadas = 0;
 
     intentoTerminado = false;
     intentoGanado = false;
@@ -56,14 +70,19 @@ NivelPiscinaEntrenamiento::NivelPiscinaEntrenamiento()
     jugadorEnZonaViento = false;
 
     vientoLateral = 0.0f;
-    gravedad = 820.0f;
+    gravedad = 4.2f;
     errorEntrada = 0.0f;
     tiempoNivel = 0.0f;
+    tiempoIman = 0.0f;
+    cooldownIman = 0.0f;
+    radioIman = 172.0f;
 
     dificultad.configurar(NORMAL);
     aplicarParametrosDificultad();
+    plataforma->colocarEn(86.0f, 165.0f);
 
     intentosRestantes = dificultad.getIntentosMaximos();
+    crearMonedas();
 
     jugador->colocarEn(
         plataforma->getX() + plataforma->getAncho() / 2.0f - jugador->getAncho() / 2.0f,
@@ -83,6 +102,16 @@ void NivelPiscinaEntrenamiento::aplicarParametrosDificultad()
         );
 
     jugador->setEnergiaMaxima(dificultad.getEnergiaInicial());
+
+    if (dificultad.getTipo() == FACIL) {
+        gravedad = 3.6f;
+    }
+    else if (dificultad.getTipo() == NORMAL) {
+        gravedad = 4.2f;
+    }
+    else {
+        gravedad = 5.0f;
+    }
 }
 
 void NivelPiscinaEntrenamiento::cambiarDificultad(TipoDificultad tipo)
@@ -97,6 +126,9 @@ void NivelPiscinaEntrenamiento::actualizar(float dt)
     plataforma->actualizar(dt);
     dron->actualizar(dt, *jugador);
     tiempoNivel += dt;
+    cooldownIman = std::max(0.0f, cooldownIman - dt);
+    tiempoIman = std::max(0.0f, tiempoIman - dt);
+    actualizarMonedas(dt);
 
     if (!jugador->estaEnAire()) {
         jugador->colocarEn(
@@ -111,7 +143,7 @@ void NivelPiscinaEntrenamiento::actualizar(float dt)
         jugador->aplicarGravedad(gravedad);
 
         if (jugadorEnZonaViento) {
-            float turbulencia = std::sin(tiempoNivel * 4.0f + jugador->getY() * 0.01f) * 12.0f;
+            float turbulencia = std::sin(tiempoNivel * 4.0f + jugador->getY() * 0.01f) * 26.0f;
             jugador->aplicarViento(vientoLateral + turbulencia);
         }
 
@@ -123,6 +155,54 @@ void NivelPiscinaEntrenamiento::actualizar(float dt)
         jugador->actualizar(dt);
         verificarColisiones();
     }
+
+    actualizarCamara();
+}
+
+void NivelPiscinaEntrenamiento::crearMonedas()
+{
+    monedas.clear();
+    monedas.reserve(16);
+    monedas.emplace_back(std::make_unique<Moneda>(392.0f, 450.0f));
+    monedas.emplace_back(std::make_unique<Moneda>(210.0f, 690.0f));
+    monedas.emplace_back(std::make_unique<Moneda>(555.0f, 920.0f));
+    monedas.emplace_back(std::make_unique<Moneda>(310.0f, 1190.0f));
+    monedas.emplace_back(std::make_unique<Moneda>(610.0f, 1470.0f));
+    monedas.emplace_back(std::make_unique<Moneda>(180.0f, 1760.0f));
+    monedas.emplace_back(std::make_unique<Moneda>(420.0f, 2070.0f));
+    monedas.emplace_back(std::make_unique<Moneda>(580.0f, 2350.0f));
+    monedas.emplace_back(std::make_unique<Moneda>(250.0f, 2640.0f));
+    monedas.emplace_back(std::make_unique<Moneda>(475.0f, 2920.0f));
+    monedas.emplace_back(std::make_unique<Moneda>(160.0f, 3210.0f));
+    monedas.emplace_back(std::make_unique<Moneda>(620.0f, 3490.0f));
+    monedas.emplace_back(std::make_unique<Moneda>(350.0f, 3730.0f));
+}
+
+void NivelPiscinaEntrenamiento::actualizarMonedas(float dt)
+{
+    QPointF objetivo = jugador->centro();
+    for (const auto& moneda : monedas) {
+        moneda->actualizar(dt);
+        float dx = moneda->centro().x() - objetivo.x();
+        float dy = moneda->centro().y() - objetivo.y();
+        float distancia = std::sqrt(dx * dx + dy * dy);
+
+        if (tiempoIman > 0.0f && distancia <= radioIman) {
+            moneda->atraerHacia(objetivo, 720.0f, radioIman, dt);
+        }
+
+        if (!moneda->estaRecolectada() && moneda->rect().intersects(jugador->rect())) {
+            moneda->recolectar();
+            monedasRecolectadas++;
+            puntaje = std::min(100, puntaje + 3);
+            eventosSonido.push_back(SONIDO_ANILLO);
+        }
+    }
+}
+
+void NivelPiscinaEntrenamiento::actualizarCamara()
+{
+    camaraY = std::clamp(jugador->getY() - 250.0f, 0.0f, alturaMundo - 600.0f);
 }
 
 void NivelPiscinaEntrenamiento::verificarColisiones()
@@ -232,7 +312,9 @@ void NivelPiscinaEntrenamiento::calcularPuntajePorEntrada()
         bonusVelocidad = -10;
     }
 
-    puntaje = puntajePrecision + bonusVelocidad;
+    int bonusMonedas = std::min(18, monedasRecolectadas * 2);
+
+    puntaje = puntajePrecision + bonusVelocidad + bonusMonedas;
 
     if (puntaje > 100) {
         puntaje = 100;
@@ -243,178 +325,216 @@ void NivelPiscinaEntrenamiento::calcularPuntajePorEntrada()
     }
 }
 
-void NivelPiscinaEntrenamiento::dibujar(QPainter& painter)
+void NivelPiscinaEntrenamiento::dibujarEscenario(QPainter& painter)
 {
-    if (!spriteFondoCiudad.isNull()) {
-        painter.drawPixmap(QRect(0, 0, 800, 600), spriteFondoCiudad);
-        painter.fillRect(QRectF(0, 0, 800, 600), QColor(8, 26, 42, 78));
-    }
-    else {
-        QLinearGradient cielo(0, 0, 0, 600);
-        cielo.setColorAt(0.0, QColor(170, 220, 255));
-        cielo.setColorAt(0.7, QColor(90, 190, 235));
-        cielo.setColorAt(1.0, QColor(40, 140, 200));
-        painter.fillRect(QRectF(0, 0, 800, 600), cielo);
+    for (int y = 0; y < alturaMundo; y += 600) {
+        if (!spriteFondoCiudad.isNull()) {
+            painter.drawPixmap(QRect(0, y, 800, 600), spriteFondoCiudad);
+            painter.fillRect(QRectF(0, y, 800, 600), QColor(7, 22, 38, 108));
+        }
+        else {
+            QLinearGradient cielo(0, y, 0, y + 600);
+            cielo.setColorAt(0.0, QColor(170, 220, 255));
+            cielo.setColorAt(0.7, QColor(90, 190, 235));
+            cielo.setColorAt(1.0, QColor(40, 140, 200));
+            painter.fillRect(QRectF(0, y, 800, 600), cielo);
+        }
     }
 
     if (!spriteEdificio.isNull()) {
-        painter.drawPixmap(QRect(540, 96, 192, 120), spriteEdificio);
+        painter.drawPixmap(QRect(540, 110, 192, 120), spriteEdificio);
+        painter.drawPixmap(QRect(520, 3600, 192, 120), spriteEdificio);
     }
 
-    QLinearGradient aguaFondo(0, 410, 0, 550);
-    aguaFondo.setColorAt(0.0, QColor(90, 210, 255));
-    aguaFondo.setColorAt(1.0, QColor(20, 130, 210));
+    painter.setPen(QPen(QColor(230, 250, 255, 36), 2));
+    for (int y = 120; y < alturaMundo - 120; y += 88) {
+        painter.drawLine(90, y, 710, y + 22);
+    }
 
     painter.setPen(Qt::NoPen);
-    painter.setBrush(QBrush(aguaFondo));
-    painter.drawRect(QRectF(0, 410, 800, 140));
-
-    if (!spriteCarriles.isNull()) {
-        painter.drawPixmap(QRect(110, 420, 560, 126), spriteCarriles);
+    painter.setBrush(QColor(42, 205, 238, 55));
+    painter.drawRect(QRectF(62, 90, 42, alturaMundo - 180));
+    painter.setBrush(QColor(255, 225, 95, 205));
+    for (int y = 142; y < alturaMundo - 160; y += 210) {
+        painter.drawRect(QRectF(38, y, 158, 10));
     }
 
-    if (!spriteBrilloAgua.isNull()) {
-        painter.drawPixmap(QRect(250, 465, 360, 118), spriteBrilloAgua);
-    }
-
-    QLinearGradient sueloGradiente(suelo.topLeft(), suelo.bottomLeft());
-    sueloGradiente.setColorAt(0.0, QColor(40, 190, 90));
-    sueloGradiente.setColorAt(1.0, QColor(20, 120, 50));
-
-    painter.setPen(Qt::NoPen);
-    painter.setBrush(QBrush(sueloGradiente));
-    painter.drawRect(suelo);
-
-    painter.setPen(QPen(QColor(255, 255, 255, 45), 2));
-    for (int i = 0; i < 8; ++i) {
-        int x = 70 + i * 95;
-        painter.drawLine(x, 430, x + 45, 550);
-    }
-
-    if (!spriteGradas.isNull()) {
-        painter.drawPixmap(QRect(60, 318, 265, 92), spriteGradas);
-    }
+    dibujarRafagasViento(painter);
 
     if (!spriteBanderines.isNull()) {
-        painter.drawPixmap(QRect(70, 218, 360, 74), spriteBanderines);
+        painter.drawPixmap(QRect(145, 245, 420, 84), spriteBanderines);
     }
 
-    painter.setPen(QPen(QColor(150, 230, 255, 135), 2, Qt::DashLine));
-    painter.setBrush(QColor(170, 230, 255, jugadorEnZonaViento ? 78 : 34));
-    painter.drawRoundedRect(zonaViento, 10, 10);
+    const QRectF pisoVisual(0, 3820, 800, alturaMundo - 3820);
+    QLinearGradient pisoFinal(0, pisoVisual.y(), 0, pisoVisual.y() + pisoVisual.height());
+    pisoFinal.setColorAt(0.0, QColor(218, 232, 232));
+    pisoFinal.setColorAt(0.36, QColor(126, 158, 142));
+    pisoFinal.setColorAt(1.0, QColor(21, 112, 66));
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(QBrush(pisoFinal));
+    painter.drawRect(pisoVisual);
 
-    if (!spriteViento.isNull()) {
-        painter.drawPixmap(QRect(300, 295, 160, 65), spriteViento);
+    painter.setPen(QPen(QColor(255, 255, 255, 72), 2));
+    for (int x = 55; x < 800; x += 92) {
+        painter.drawLine(x, pisoVisual.y() + 12.0f, x - 35, pisoVisual.y() + pisoVisual.height());
     }
 
-    float porcentajeEnergia = 0.0f;
+    painter.setPen(QPen(QColor(255, 225, 95, 190), 4));
+    painter.drawLine(QPointF(0, pisoVisual.y() + 6.0f), QPointF(800, pisoVisual.y() + 6.0f));
 
-    if (jugador->getEnergiaMaxima() > 0.0f) {
-        porcentajeEnergia = jugador->getEnergia() / jugador->getEnergiaMaxima();
+    painter.setBrush(QColor(4, 26, 36, 110));
+    painter.setPen(Qt::NoPen);
+    painter.drawRect(QRectF(170, piscina.y() - 18.0f, 460, 150));
+
+    if (!spriteAguaProfunda.isNull()) {
+        painter.drawPixmap(QRect(222, static_cast<int>(piscina.y() + 18.0f), 356, 136), spriteAguaProfunda);
     }
 
-    dibujarPanel(painter, QRectF(18, 18, 286, 180), QColor(7, 18, 31, 185));
-
-    QFont tituloHud = painter.font();
-    tituloHud.setPointSize(12);
-    tituloHud.setBold(true);
-    painter.setFont(tituloHud);
-    painter.setPen(QColor(238, 252, 255));
-    painter.drawText(34, 46, "Piscina de entrenamiento");
-
-    QFont textoHud = painter.font();
-    textoHud.setPointSize(8);
-    textoHud.setBold(false);
-    painter.setFont(textoHud);
-    painter.setPen(QColor(180, 226, 242));
-    painter.drawText(34, 70, "Espacio salto  |  A/D correccion  |  E impulso");
-
-    painter.setPen(QColor(255, 225, 95));
-    painter.drawText(34, 98, "Puntaje");
-    dibujarBarra(painter, QRectF(108, 88, 160, 12), puntaje / 100.0f, QColor(255, 225, 95));
-    painter.drawText(274, 99, QString::number(puntaje));
-
-    painter.setPen(QColor(120, 235, 255));
-    painter.drawText(34, 124, "Energia");
-    dibujarBarra(painter, QRectF(108, 114, 160, 12), porcentajeEnergia, QColor(120, 235, 255));
-
-    painter.setPen(QColor(222, 240, 250));
-    painter.drawText(34, 151, "Intentos: " + QString::number(intentosRestantes) +
-                               "   Minimo: " + QString::number(dificultad.getPuntajeMinimo()));
-    painter.drawText(34, 174, "Viento: " + QString::number(vientoLateral, 'f', 0) +
-                               "   Error: " + QString::number(errorEntrada, 'f', 1));
-
-    dibujarPanel(painter, QRectF(325, 18, 198, 60), QColor(255, 255, 255, 185));
-    painter.setPen(QColor(20, 38, 52));
-    painter.drawText(343, 42, "Dron: " + QString(dron->getEstado() == PATRULLA ? "patrulla" :
-                                                 dron->getEstado() == ESCANEO ? "escaneo" : "intercepta"));
-    painter.drawText(343, 64, jugadorEnZonaViento ? "Zona de viento activa" : "Trayectoria estable");
-
-    painter.setPen(QColor(255, 255, 0));
-    painter.setBrush(QColor(255, 255, 0, 45));
-    painter.drawRect(zonaMeta);
-
-    if (!spritePiscinaBase.isNull()) {
-        painter.drawPixmap(QRect(224, 440, 352, 122), spritePiscinaBase);
+    if (!spritePiscinaPremium.isNull()) {
+        painter.drawPixmap(QRect(176, static_cast<int>(piscina.y() - 54.0f), 448, 190), spritePiscinaPremium);
     }
-    else {
-        QLinearGradient aguaGradiente(piscina.topLeft(), piscina.bottomLeft());
-        aguaGradiente.setColorAt(0.0, QColor(60, 190, 255));
-        aguaGradiente.setColorAt(1.0, QColor(0, 80, 210));
-
-        painter.setPen(QPen(QColor(0, 60, 150), 2));
-        painter.setBrush(QBrush(aguaGradiente));
-        painter.drawRoundedRect(piscina, 8, 8);
+    else if (!spritePiscinaBase.isNull()) {
+        painter.drawPixmap(QRect(198, static_cast<int>(piscina.y() - 34.0f), 402, 140), spritePiscinaBase);
     }
 
-    if (intentoTerminado && !spritePiscina.isNull()) {
-        QRect splashRect(
-            static_cast<int>(piscina.x() + piscina.width() / 2.0f - 70),
-            static_cast<int>(piscina.y() - 45),
-            140,
-            90
-            );
-
-        SpriteCache::dibujarAjustado(painter, spritePiscina, splashRect, "salpicadura");
+    for (const auto& moneda : monedas) {
+        moneda->dibujar(painter);
     }
-
-    painter.setPen(Qt::white);
-    painter.drawText(piscina.x() + 95, piscina.y() + 43, "Piscina");
-
-    painter.setPen(Qt::black);
 
     plataforma->dibujar(painter);
     dron->dibujar(painter);
-    jugador->dibujar(painter);
+
+    if (tiempoIman > 0.0f) {
+        dibujarIman(painter);
+    }
+
+    if (intentoTerminado && piscina.intersects(jugador->rect())) {
+        if (!spriteBurbujas.isNull()) {
+            painter.drawPixmap(QRect(static_cast<int>(jugador->centro().x() - 86.0f),
+                                     static_cast<int>(piscina.y() + 12.0f), 172, 170), spriteBurbujas);
+        }
+
+        const QPixmap* splash = &spriteChapuzonFuerte;
+        if (puntaje >= 85) {
+            splash = &spriteChapuzonLimpio;
+        }
+        else if (puntaje >= dificultad.getPuntajeMinimo()) {
+            splash = &spriteChapuzonMedio;
+        }
+        if (!splash->isNull()) {
+            SpriteCache::dibujarAjustado(painter, *splash,
+                                         QRect(static_cast<int>(jugador->centro().x() - 135.0f),
+                                               static_cast<int>(piscina.y() - 88.0f), 270, 158),
+                                         "salpicadura_entrenamiento");
+        }
+
+        painter.save();
+        painter.setClipRect(QRectF(piscina.x(), piscina.y(), piscina.width(), 150.0f));
+        painter.setOpacity(0.45);
+        const float xOriginal = jugador->getX();
+        const float yOriginal = jugador->getY();
+        jugador->colocarEn(xOriginal, piscina.y() + 40.0f);
+        jugador->dibujar(painter);
+        jugador->colocarEn(xOriginal, yOriginal);
+        painter.restore();
+    }
+    else {
+        jugador->dibujar(painter);
+    }
+}
+
+void NivelPiscinaEntrenamiento::dibujarRafagasViento(QPainter& painter)
+{
+    painter.setPen(QPen(QColor(150, 235, 255, jugadorEnZonaViento ? 150 : 82), 3));
+    for (int i = 0; i < 22; ++i) {
+        float y = zonaViento.y() + 45.0f + i * 72.0f;
+        float offset = std::sin(tiempoNivel * 3.0f + i) * 34.0f;
+        painter.drawArc(QRectF(120 + offset, y, 560, 38), 0, 180 * 16);
+        painter.drawLine(QPointF(170 + offset, y + 18), QPointF(620 + offset, y + 18));
+    }
+}
+
+void NivelPiscinaEntrenamiento::dibujarIman(QPainter& painter)
+{
+    painter.setPen(QPen(QColor(255, 225, 95, 160), 3));
+    painter.setBrush(QColor(255, 225, 95, 24));
+    painter.drawEllipse(jugador->centro(), radioIman, radioIman);
+    painter.setPen(QPen(QColor(80, 230, 255, 160), 2));
+    for (int i = 0; i < 8; ++i) {
+        float angulo = tiempoNivel * 3.2f + i * 0.78f;
+        QPointF a(jugador->centro().x() + std::cos(angulo) * 42.0f,
+                  jugador->centro().y() + std::sin(angulo) * 42.0f);
+        QPointF b(jugador->centro().x() + std::cos(angulo) * radioIman,
+                  jugador->centro().y() + std::sin(angulo) * radioIman);
+        painter.drawLine(a, b);
+    }
+}
+
+void NivelPiscinaEntrenamiento::dibujarHud(QPainter& painter)
+{
+    float porcentajeEnergia = jugador->getEnergiaMaxima() > 0.0f ? jugador->getEnergia() / jugador->getEnergiaMaxima() : 0.0f;
+
+    dibujarPanel(painter, QRectF(18, 18, 322, 190), QColor(3, 12, 25, 204));
+
+    QFont fuente = painter.font();
+    fuente.setPointSize(12);
+    fuente.setBold(true);
+    painter.setFont(fuente);
+    painter.setPen(QColor(238, 252, 255));
+    painter.drawText(38, 46, "Torre de entrenamiento");
+
+    fuente.setPointSize(8);
+    fuente.setBold(false);
+    painter.setFont(fuente);
+    painter.setPen(QColor(180, 226, 242));
+    painter.drawText(38, 70, "Espacio: iniciar caida | Click: iman metalico");
+
+    painter.setPen(QColor(255, 225, 95));
+    painter.drawText(38, 100, "Puntaje");
+    dibujarBarra(painter, QRectF(112, 90, 178, 10), puntaje / 100.0f, QColor(255, 225, 95));
+    painter.drawText(298, 101, QString::number(puntaje));
+
+    painter.setPen(QColor(120, 235, 255));
+    painter.drawText(38, 126, "Energia");
+    dibujarBarra(painter, QRectF(112, 116, 178, 10), porcentajeEnergia, QColor(120, 235, 255));
+
+    painter.setPen(QColor(230, 245, 255));
+    painter.drawText(38, 151, "Monedas: " + QString::number(monedasRecolectadas) + "/" + QString::number(monedas.size()));
+    painter.drawText(38, 176, "Iman: " + QString(tiempoIman > 0.0f ? "activo" : cooldownIman > 0.0f ? "recargando" : "listo"));
+
+    dibujarPanel(painter, QRectF(548, 24, 232, 74), QColor(3, 12, 25, 174));
+    painter.setPen(QColor(190, 236, 248));
+    painter.drawText(568, 52, jugadorEnZonaViento ? "Rafagas visibles activas" : "Aire estable");
+    painter.drawText(568, 78, "Descenso: " + QString::number(jugador->getY() / (alturaMundo - 80.0f) * 100.0f, 'f', 0) + "%");
 
     if (intentoTerminado || nivelSuperado || nivelPerdido) {
-        dibujarPanel(painter, QRectF(196, 195, 430, 205), QColor(248, 252, 255, 240));
+        dibujarPanel(painter, QRectF(210, 218, 420, 188), QColor(3, 12, 25, 220));
+        fuente.setPointSize(14);
+        fuente.setBold(true);
+        painter.setFont(fuente);
+        painter.setPen(QColor(255, 225, 95));
+        painter.drawText(QRectF(234, 246, 372, 30), Qt::AlignCenter,
+                         nivelSuperado ? "ENTRADA APROBADA" : nivelPerdido ? "ENTRADA FALLIDA" : "Entrada en evaluacion");
 
-        QFont resultado = painter.font();
-        resultado.setPointSize(14);
-        resultado.setBold(true);
-        painter.setFont(resultado);
-        painter.setPen(QColor(18, 38, 54));
-
-        if (nivelSuperado) {
-            painter.drawText(QRectF(220, 225, 382, 30), Qt::AlignCenter, "NIVEL SUPERADO");
-        }
-        else if (nivelPerdido) {
-            painter.drawText(QRectF(220, 225, 382, 30), Qt::AlignCenter, "NIVEL FALLIDO");
-        }
-        else {
-            painter.drawText(QRectF(220, 225, 382, 30), Qt::AlignCenter, "Intento terminado");
-        }
-
-        resultado.setPointSize(9);
-        resultado.setBold(false);
-        painter.setFont(resultado);
-        painter.drawText(255, 275, "Puntaje obtenido: " + QString::number(puntaje));
-        painter.drawText(255, 302, "Puntaje minimo: " + QString::number(dificultad.getPuntajeMinimo()));
-        painter.drawText(255, 329, "Error de entrada: " + QString::number(errorEntrada, 'f', 1));
-        painter.drawText(255, 356, "Intentos restantes: " + QString::number(intentosRestantes));
-        painter.drawText(255, 383, "R reinicia  |  Enter avanza si superaste el nivel");
+        fuente.setPointSize(9);
+        fuente.setBold(false);
+        painter.setFont(fuente);
+        painter.setPen(QColor(220, 242, 250));
+        painter.drawText(260, 305, "Puntaje: " + QString::number(puntaje));
+        painter.drawText(260, 332, "Error: " + QString::number(errorEntrada, 'f', 1));
+        painter.drawText(260, 359, "Monedas metalicas: " + QString::number(monedasRecolectadas));
+        painter.drawText(260, 386, "R reinicia  |  Enter avanza si superaste");
     }
+}
+
+void NivelPiscinaEntrenamiento::dibujar(QPainter& painter)
+{
+    painter.save();
+    painter.translate(0, -camaraY);
+    dibujarEscenario(painter);
+    painter.restore();
+
+    dibujarHud(painter);
 }
 
 void NivelPiscinaEntrenamiento::teclaPresionada(int tecla)
@@ -422,8 +542,10 @@ void NivelPiscinaEntrenamiento::teclaPresionada(int tecla)
     if (tecla == Qt::Key_Space) {
         if (!jugador->estaEnAire()) {
             eventosSonido.push_back(SONIDO_SALTO);
+            jugador->setEnAire(true);
+            jugador->setVX(70.0f);
+            jugador->setVY(72.0f);
         }
-        jugador->saltar();
     }
 
     if (tecla == Qt::Key_A) {
@@ -435,7 +557,7 @@ void NivelPiscinaEntrenamiento::teclaPresionada(int tecla)
     }
 
     if (tecla == Qt::Key_E) {
-        jugador->activarImpulso(true);
+        activarIman();
     }
 
     if (tecla == Qt::Key_R) {
@@ -469,9 +591,24 @@ void NivelPiscinaEntrenamiento::teclaLiberada(int tecla)
     if (tecla == Qt::Key_D) {
         jugador->moverDerecha(false);
     }
+}
 
-    if (tecla == Qt::Key_E) {
-        jugador->activarImpulso(false);
+void NivelPiscinaEntrenamiento::mousePresionado(const QPointF& posicion)
+{
+    Q_UNUSED(posicion);
+    activarIman();
+}
+
+void NivelPiscinaEntrenamiento::activarIman()
+{
+    if (intentoTerminado || nivelSuperado || nivelPerdido) {
+        return;
+    }
+
+    if (cooldownIman <= 0.0f && jugador->getEnergia() > 8.0f) {
+        tiempoIman = 1.15f;
+        cooldownIman = 2.4f;
+        eventosSonido.push_back(SONIDO_ANILLO);
     }
 }
 
@@ -483,10 +620,14 @@ void NivelPiscinaEntrenamiento::reiniciarIntento()
 
     puntaje = 0;
     errorEntrada = 0.0f;
+    monedasRecolectadas = 0;
     intentoTerminado = false;
     intentoGanado = false;
     jugadorEnZonaViento = false;
+    tiempoIman = 0.0f;
+    cooldownIman = 0.0f;
     dron->reiniciarMemoriaParcial();
+    crearMonedas();
 
     jugador->setEnAire(false);
     jugador->setVX(0.0f);
@@ -504,6 +645,7 @@ void NivelPiscinaEntrenamiento::reiniciarNivel()
     puntaje = 0;
     mejorPuntaje = 0;
     errorEntrada = 0.0f;
+    monedasRecolectadas = 0;
 
     intentoTerminado = false;
     intentoGanado = false;
@@ -511,6 +653,9 @@ void NivelPiscinaEntrenamiento::reiniciarNivel()
     nivelPerdido = false;
     jugadorEnZonaViento = false;
     tiempoNivel = 0.0f;
+    camaraY = 0.0f;
+    tiempoIman = 0.0f;
+    cooldownIman = 0.0f;
     dron->reiniciarMemoriaParcial();
 
     intentosRestantes = dificultad.getIntentosMaximos();
@@ -520,6 +665,8 @@ void NivelPiscinaEntrenamiento::reiniciarNivel()
     jugador->setVY(0.0f);
     jugador->activarImpulso(false);
     jugador->setEnergiaMaxima(dificultad.getEnergiaInicial());
+    plataforma->colocarEn(86.0f, 165.0f);
+    crearMonedas();
 
     jugador->colocarEn(
         plataforma->getX() + plataforma->getAncho() / 2.0f - jugador->getAncho() / 2.0f,

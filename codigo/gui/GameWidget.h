@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QTimer>
 #include <QKeyEvent>
+#include <QMouseEvent>
 #include <QSoundEffect>
 #include <memory>
 #include <vector>
@@ -12,6 +13,7 @@
 
 enum EstadoPantalla
 {
+    PANTALLA_INTRO,
     PANTALLA_INICIO,
     PANTALLA_JUGANDO,
     PANTALLA_PAUSA
@@ -34,6 +36,8 @@ private:
     QSoundEffect* sonidoColision;
     QSoundEffect* sonidoAgua;
     QSoundEffect* sonidoNivel;
+    QSoundEffect* sonidoMenu;
+    float tiempoIntro;
 
     NivelJuego* nivel();
     void cargarNiveles();
@@ -45,6 +49,8 @@ private:
     void reproducirEventoSonido(EventoSonidoJuego evento);
     void procesarSonidosNivel();
     void configurarLienzo(QPainter& painter);
+    QPointF convertirAVirtual(const QPoint& posicion) const;
+    void dibujarIntro(QPainter& painter);
     void dibujarInicio(QPainter& painter);
     void dibujarPausa(QPainter& painter);
     void dibujarMarcoJuego(QPainter& painter);
@@ -59,6 +65,7 @@ protected:
     void paintEvent(QPaintEvent* event) override;
     void keyPressEvent(QKeyEvent* event) override;
     void keyReleaseEvent(QKeyEvent* event) override;
+    void mousePressEvent(QMouseEvent* event) override;
 
 private slots:
     void actualizar();
