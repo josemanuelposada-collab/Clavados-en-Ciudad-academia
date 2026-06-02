@@ -27,7 +27,7 @@ Fecha limite: 05 de junio de 2026.
 - [x] Rama `momento/3-implementacion-final`.
 - [x] Rama `release/entrega-final`.
 - [ ] Confirmar que el profesor pueda acceder al repositorio.
-- [ ] Revisar que el ejecutable final este incluido donde se indique en la entrega.
+- [x] Ejecutable final incluido en `archivos/entrega/ClavadosCiudadAcademia.exe`.
 
 ## Documentacion
 

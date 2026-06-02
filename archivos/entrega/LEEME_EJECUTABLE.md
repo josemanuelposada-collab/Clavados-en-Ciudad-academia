@@ -13,7 +13,7 @@ El archivo `.exe` queda incluido en el repositorio para cumplir la entrega. Si s
 Comando sugerido desde la raiz del repositorio:
 
 ```powershell
-scripts\preparar_entrega.ps1
+codigo\scripts\preparar_entrega.ps1
 ```
 
 Ese script recompila el proyecto, copia el `.exe` y ejecuta `windeployqt` sobre una carpeta local de entrega.
