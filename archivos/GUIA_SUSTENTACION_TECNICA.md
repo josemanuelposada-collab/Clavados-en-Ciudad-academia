@@ -13,6 +13,7 @@ Este archivo es una guia de estudio para explicar el proyecto. No reemplaza el i
 - `entidades/`: contiene objetos del mundo: `Entidad`, `Personaje`, `Plataforma`, `Anillo` y `Obstaculo`.
 - `fisicas/`: contiene modelos fisicos parametrizables.
 - `agente/`: contiene el dron supervisor.
+- `render/`: contiene `SpriteCache`, usado para evitar reescalados repetidos de sprites.
 - `recursos/`: contiene sprites y audios incluidos con `recursos.qrc`.
 
 ## POO y herencia propia
@@ -21,22 +22,30 @@ La herencia propia principal esta en `Entidad`. De ella heredan `Personaje`, `Pl
 
 Tambien existe `NivelJuego` como interfaz comun para los niveles. `NivelPiscinaEntrenamiento` y `NivelRutaAnillos` implementan esa interfaz, lo que permite que `GameWidget` los maneje mediante polimorfismo.
 
-## Memoria dinamica
+## Memoria dinamica y RAII
 
-El proyecto usa memoria dinamica con punteros para niveles, entidades y componentes del juego. Ejemplos:
+El proyecto usa memoria dinamica con propiedad explicita mediante `std::unique_ptr`. Esto conserva el uso de objetos creados en tiempo de ejecucion, pero evita fugas si ocurre una excepcion o si se reinicia un nivel.
 
-- `GameWidget` crea niveles y los libera en su destructor.
-- `NivelPiscinaEntrenamiento` crea `Personaje`, `Plataforma` y `DronVigilante`.
-- `NivelRutaAnillos` crea anillos y obstaculos con `new` y los libera en `liberarEntidades`.
+- `GameWidget` almacena los niveles como `std::vector<std::unique_ptr<NivelJuego>>`.
+- `NivelPiscinaEntrenamiento` posee `Personaje`, `Plataforma` y `DronVigilante` con `std::unique_ptr`.
+- `NivelRutaAnillos` posee anillos y obstaculos con `std::vector<std::unique_ptr<...>>`.
 
-Esta decision permite trabajar con polimorfismo y colecciones de objetos creados durante la ejecucion.
+Esta decision permite explicar memoria dinamica, polimorfismo y seguridad de recursos bajo el principio RAII.
 
 ## Contenedores
 
-- `QVector<NivelJuego*>` en `GameWidget` para almacenar niveles.
-- `std::vector<Anillo*>` y `std::vector<Obstaculo*>` en el nivel de torre.
+- `std::vector<std::unique_ptr<NivelJuego>>` en `GameWidget` para almacenar niveles polimorficos.
+- `std::vector<std::unique_ptr<Anillo>>` y `std::vector<std::unique_ptr<Obstaculo>>` en el nivel de torre.
 - `QVector<float>` en el dron para recordar errores recientes del jugador.
 - `QSet<int>` para registrar teclas presionadas en el nivel de torre.
+
+## Eficiencia
+
+- Los sprites escalados se cachean con `SpriteCache` y `QPixmapCache`.
+- La logica del agente no decide en cada frame: acumula tiempo y razona cada 0.18 segundos.
+- Los niveles recorren colecciones lineales pequenas, por lo que las iteraciones principales son O(n) con n bajo.
+- La memoria de aprendizaje del dron se limita a 8 errores recientes para mantener consumo acotado.
+- El lienzo virtual se ajusto a 1280x720 y el mundo de juego se escala a 16:9 sin deformar los controles.
 
 ## Fisicas implementadas
 
@@ -98,10 +107,23 @@ Los niveles emiten eventos de sonido mediante `EventoSonidoJuego`, y `GameWidget
 - seleccion de dificultad;
 - pausa;
 - ayuda;
-- pantalla completa con escalado proporcional;
+- pantalla completa sobre lienzo virtual 1280x720;
 - pantalla de campana completada;
 - HUD por nivel;
 - cambio entre niveles para demostracion.
+
+## Recursos visuales nuevos
+
+Se agregaron recursos de Ciudad Academia:
+
+- fondo principal del campus deportivo;
+- gradas;
+- edificio de cristal;
+- carriles de piscina;
+- banderines;
+- brillo de agua.
+
+El fondo principal se genero con herramienta de imagen para el proyecto. Los sprites de detalle se generaron localmente de forma procedimental, sin recursos comerciales.
 
 ## Puntos fuertes para mencionar en el video
 
@@ -109,5 +131,7 @@ Los niveles emiten eventos de sonido mediante `EventoSonidoJuego`, y `GameWidget
 - Hay dos niveles con dinamicas diferentes.
 - La dificultad afecta varios parametros.
 - El dron esta modelado como agente con cuatro componentes.
+- La memoria dinamica se maneja con RAII y `unique_ptr`.
+- El render evita reescalar sprites en cada frame mediante cache.
 - Los sonidos se reproducen por eventos de juego, no como llamadas aisladas.
 - El juego compila con Qt y genera ejecutable.

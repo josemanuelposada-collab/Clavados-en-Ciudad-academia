@@ -6,9 +6,9 @@ Fecha limite: 05 de junio de 2026.
 
 - [x] Proyecto en C++ con Qt Widgets.
 - [x] Dos niveles jugables.
-- [x] GUI con pantalla de inicio, pausa, HUD y pantalla completa.
+- [x] GUI con pantalla de inicio, pausa, HUD, pantalla completa y lienzo 16:9.
 - [x] Herencia propia fuera de Qt.
-- [x] Memoria dinamica con liberacion explicita.
+- [x] Memoria dinamica con `std::unique_ptr` y RAII.
 - [x] Contenedores STL/Qt.
 - [x] Al menos tres modelos fisicos no rectilineos.
 - [x] Dificultad configurable y no trivial.
@@ -17,6 +17,8 @@ Fecha limite: 05 de junio de 2026.
 - [x] Sonido de fondo.
 - [x] Sonidos de eventos.
 - [x] Sprites integrados por recursos Qt.
+- [x] Fondo y sprites de Ciudad Academia integrados.
+- [x] Cache de sprites para reducir reescalados por frame.
 
 ## Repositorio
 
