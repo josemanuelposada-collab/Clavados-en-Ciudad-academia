@@ -6,6 +6,7 @@ SOURCES += \
     agente/DronVigilante.cpp \
     entidades/Anillo.cpp \
     entidades/Entidad.cpp \
+    entidades/Moneda.cpp \
     entidades/Obstaculo.cpp \
     entidades/Personaje.cpp \
     entidades/Plataforma.cpp \
@@ -22,6 +23,7 @@ HEADERS += \
     agente/DronVigilante.h \
     entidades/Anillo.h \
     entidades/Entidad.h \
+    entidades/Moneda.h \
     entidades/Obstaculo.h \
     entidades/Personaje.h \
     entidades/Plataforma.h \

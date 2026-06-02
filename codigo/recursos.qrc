@@ -4,6 +4,7 @@
         <file>recursos/audio/colision_alerta.wav</file>
         <file>recursos/audio/entrada_agua.wav</file>
         <file>recursos/audio/fondo_entrenamiento.wav</file>
+        <file>recursos/audio/intro_menu_epico.wav</file>
         <file>recursos/audio/nivel_superado.wav</file>
         <file>recursos/audio/salto_impulso.wav</file>
         <file>recursos/sprites/advertencia.png</file>
@@ -14,7 +15,11 @@
         <file>recursos/sprites/bloqueo.png</file>
         <file>recursos/sprites/banderines_academia.png</file>
         <file>recursos/sprites/brillo_agua.png</file>
+        <file>recursos/sprites/burbujas_entrada.png</file>
         <file>recursos/sprites/carriles_piscina.png</file>
+        <file>recursos/sprites/chapuzon_fuerte.png</file>
+        <file>recursos/sprites/chapuzon_limpio.png</file>
+        <file>recursos/sprites/chapuzon_medio.png</file>
         <file>recursos/sprites/dron_alerta.png</file>
         <file>recursos/sprites/dron_escaneo.png</file>
         <file>recursos/sprites/dron_normal.png</file>
@@ -38,9 +43,12 @@
         <file>recursos/sprites/plataforma_baja.png</file>
         <file>recursos/sprites/plataforma_media.png</file>
         <file>recursos/sprites/piscina_ciudad_academia.png</file>
+        <file>recursos/sprites/piscina_final_premium.png</file>
         <file>recursos/sprites/salpicadura_grande.png</file>
         <file>recursos/sprites/temporizador.png</file>
+        <file>recursos/sprites/torre_salto_epica.png</file>
         <file>recursos/sprites/torre_columna_luz.png</file>
+        <file>recursos/sprites/agua_profunda.png</file>
         <file>recursos/sprites/velocidad_derecha.png</file>
         <file>recursos/sprites/velocidad_izquierda.png</file>
         <file>recursos/sprites/viento_lateral.png</file>
