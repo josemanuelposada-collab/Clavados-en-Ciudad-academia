@@ -1,18 +1,19 @@
 $ErrorActionPreference = "Stop"
 
-$repo = Split-Path -Parent $PSScriptRoot
+$codigoDir = Split-Path -Parent $PSScriptRoot
+$repo = Split-Path -Parent $codigoDir
 $buildDir = Join-Path $repo "build\Desktop_Qt_6_10_2_MinGW_64_bit-Debug"
 $qtBin = "C:\Qt\6.10.2\mingw_64\bin"
 $mingwBin = "C:\Qt\Tools\mingw1310_64\bin"
 $exeBuild = Join-Path $buildDir "release\ClavadosCiudadAcademia.exe"
-$entregaDir = Join-Path $repo "entrega"
+$entregaDir = Join-Path $repo "archivos\entrega"
 $deployDir = Join-Path $entregaDir "paquete-windows"
 
 $env:PATH = "$mingwBin;$qtBin;$env:PATH"
 
 Push-Location $buildDir
 try {
-    & "$qtBin\qmake.exe" "..\..\ClavadosCiudadAcademia.pro"
+    & "$qtBin\qmake.exe" "..\..\codigo\ClavadosCiudadAcademia.pro"
     & "$mingwBin\mingw32-make.exe" "-j4"
 }
 finally {
