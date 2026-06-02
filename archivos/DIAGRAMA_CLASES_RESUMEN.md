@@ -60,6 +60,9 @@ classDiagram
     class NivelPiscinaEntrenamiento
     class NivelRutaAnillos
     class GameWidget
+    class SpriteCache {
+        +dibujarAjustado(QPainter, QPixmap, QRect, QString)
+    }
     class EventoSonidoJuego
     class Dificultad
     class ModeloFisico
@@ -79,6 +82,7 @@ classDiagram
     ModeloFisico <|-- ModeloImpulso
 
     GameWidget o-- NivelJuego
+    GameWidget ..> SpriteCache
     GameWidget ..> EventoSonidoJuego
     NivelJuego ..> EventoSonidoJuego
     NivelPiscinaEntrenamiento o-- Personaje
@@ -90,13 +94,19 @@ classDiagram
     NivelRutaAnillos o-- Anillo
     NivelRutaAnillos o-- Obstaculo
     NivelRutaAnillos o-- Dificultad
+    Personaje ..> SpriteCache
+    Plataforma ..> SpriteCache
+    Anillo ..> SpriteCache
+    Obstaculo ..> SpriteCache
+    DronVigilante ..> SpriteCache
 ```
 
 ## Puntos para sustentar
 
 - Herencia propia: `Entidad` es la base de personajes, plataforma, anillos, obstaculos y dron. `NivelJuego` permite manejar niveles distintos con polimorfismo.
-- Memoria dinamica: los niveles crean objetos con `new` y los liberan en destructores o en `liberarEntidades`.
+- Memoria dinamica: los niveles y entidades usan `std::unique_ptr`, manteniendo memoria dinamica con propiedad clara y liberacion automatica.
 - Contenedores: `NivelRutaAnillos` usa `std::vector` para anillos y obstaculos; `DronVigilante` usa `QVector` como memoria de aprendizaje.
+- Eficiencia: `SpriteCache` evita reescalados repetidos de pixmaps durante el render.
 - Fisicas: gravedad/parabola, viento/turbulencia, friccion, impulso electromagnetico y oscilacion senoidal.
 - Agente inteligente: el dron separa percepcion, razonamiento, accion y aprendizaje.
 - Sonido: cada nivel emite eventos (`salto`, `anillo`, `colision`, `agua`, `nivel`) y `GameWidget` los reproduce con `QSoundEffect`.
