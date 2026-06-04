@@ -16,7 +16,8 @@ enum EstadoPantalla
     PANTALLA_INTRO,
     PANTALLA_INICIO,
     PANTALLA_JUGANDO,
-    PANTALLA_PAUSA
+    PANTALLA_PAUSA,
+    PANTALLA_GAME_OVER
 };
 
 class GameWidget : public QWidget
@@ -38,7 +39,9 @@ private:
     QSoundEffect* sonidoAgua;
     QSoundEffect* sonidoNivel;
     QSoundEffect* sonidoMenu;
+    QSoundEffect* sonidoGameOver;
     float tiempoIntro;
+    float tiempoGameOver;
 
     NivelJuego* nivel();
     void cargarNiveles();
@@ -48,6 +51,7 @@ private:
     void aplicarPersonajeSeleccionado();
     void iniciarPartida();
     void reiniciarCampania();
+    void activarGameOver();
     void reproducirEventoSonido(EventoSonidoJuego evento);
     void procesarSonidosNivel();
     void configurarLienzo(QPainter& painter);
@@ -55,6 +59,7 @@ private:
     void dibujarIntro(QPainter& painter);
     void dibujarInicio(QPainter& painter);
     void dibujarPausa(QPainter& painter);
+    void dibujarGameOver(QPainter& painter);
     void dibujarMarcoJuego(QPainter& painter);
     void dibujarCampaniaCompletada(QPainter& painter);
     bool campaniaCompletada();

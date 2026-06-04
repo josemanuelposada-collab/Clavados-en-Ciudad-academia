@@ -4,6 +4,7 @@
         <file>recursos/audio/colision_alerta.wav</file>
         <file>recursos/audio/entrada_agua.wav</file>
         <file>recursos/audio/fondo_entrenamiento.wav</file>
+        <file>recursos/audio/game_over.wav</file>
         <file>recursos/audio/intro_menu_epico.wav</file>
         <file>recursos/audio/nivel_superado.wav</file>
         <file>recursos/audio/salto_impulso.wav</file>
