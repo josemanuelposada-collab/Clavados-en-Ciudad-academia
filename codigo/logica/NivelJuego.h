@@ -13,7 +13,8 @@ enum EventoSonidoJuego
     SONIDO_ANILLO,
     SONIDO_COLISION,
     SONIDO_AGUA,
-    SONIDO_NIVEL
+    SONIDO_NIVEL,
+    SONIDO_GAME_OVER
 };
 
 class NivelJuego

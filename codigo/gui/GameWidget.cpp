@@ -32,7 +32,9 @@ GameWidget::GameWidget(QWidget* parent)
       sonidoAgua(nullptr),
       sonidoNivel(nullptr),
       sonidoMenu(nullptr),
-      tiempoIntro(0.0f)
+      sonidoGameOver(nullptr),
+      tiempoIntro(0.0f),
+      tiempoGameOver(0.0f)
 {
     setFocusPolicy(Qt::StrongFocus);
     setMouseTracking(true);
@@ -99,6 +101,10 @@ void GameWidget::cargarSonidos()
     sonidoMenu->setSource(QUrl("qrc:/recursos/audio/intro_menu_epico.wav"));
     sonidoMenu->setLoopCount(QSoundEffect::Infinite);
     sonidoMenu->setVolume(0.22f);
+
+    sonidoGameOver = new QSoundEffect(this);
+    sonidoGameOver->setSource(QUrl("qrc:/recursos/audio/game_over.wav"));
+    sonidoGameOver->setVolume(0.62f);
 }
 
 void GameWidget::avanzarNivel()
@@ -164,6 +170,22 @@ void GameWidget::reiniciarCampania()
     }
 }
 
+void GameWidget::activarGameOver()
+{
+    estadoPantalla = PANTALLA_GAME_OVER;
+    tiempoGameOver = 0.0f;
+
+    if (sonidoFondo != nullptr) {
+        sonidoFondo->stop();
+    }
+    if (sonidoMenu != nullptr) {
+        sonidoMenu->stop();
+    }
+    if (sonidoGameOver != nullptr) {
+        sonidoGameOver->play();
+    }
+}
+
 void GameWidget::reproducirEventoSonido(EventoSonidoJuego evento)
 {
     QSoundEffect* efecto = nullptr;
@@ -182,6 +204,9 @@ void GameWidget::reproducirEventoSonido(EventoSonidoJuego evento)
     }
     else if (evento == SONIDO_NIVEL) {
         efecto = sonidoNivel;
+    }
+    else if (evento == SONIDO_GAME_OVER) {
+        efecto = sonidoGameOver;
     }
 
     if (efecto != nullptr) {
@@ -419,6 +444,45 @@ void GameWidget::dibujarPausa(QPainter& painter)
     painter.drawText(QRectF(485, 362, 310, 24), Qt::AlignCenter, "M: volver al inicio");
 }
 
+void GameWidget::dibujarGameOver(QPainter& painter)
+{
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(QColor(0, 0, 0, 178));
+    painter.drawRect(QRectF(0, 0, ANCHO_BASE, ALTO_BASE));
+
+    QLinearGradient panel(0, 225, 0, 505);
+    panel.setColorAt(0.0, QColor(8, 21, 38, 246));
+    panel.setColorAt(1.0, QColor(18, 37, 55, 242));
+    painter.setBrush(panel);
+    painter.drawRoundedRect(QRectF(365, 210, 550, 280), 12, 12);
+
+    painter.setBrush(QColor(230, 60, 60));
+    painter.drawRect(QRectF(365, 210, 8, 280));
+    painter.setBrush(QColor(255, 225, 95));
+    painter.drawRect(QRectF(373, 210, 542, 5));
+
+    QFont fuente = painter.font();
+    fuente.setPointSize(34);
+    fuente.setBold(true);
+    painter.setFont(fuente);
+    painter.setPen(QColor(255, 245, 235));
+    painter.drawText(QRectF(390, 252, 500, 70), Qt::AlignCenter, "GAME OVER");
+
+    fuente.setPointSize(12);
+    fuente.setBold(false);
+    painter.setFont(fuente);
+    painter.setPen(QColor(214, 238, 246));
+    painter.drawText(QRectF(410, 342, 460, 32), Qt::AlignCenter, "Se acabaron los intentos de la campana.");
+    painter.drawText(QRectF(410, 386, 460, 32), Qt::AlignCenter, "Regresando al menu...");
+
+    float progreso = std::clamp(tiempoGameOver / 3.0f, 0.0f, 1.0f);
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(QColor(70, 96, 116));
+    painter.drawRect(QRectF(470, 438, 340, 10));
+    painter.setBrush(QColor(255, 225, 95));
+    painter.drawRect(QRectF(470, 438, 340 * progreso, 10));
+}
+
 void GameWidget::dibujarCampaniaCompletada(QPainter& painter)
 {
     painter.setPen(Qt::NoPen);
@@ -516,6 +580,15 @@ void GameWidget::actualizar()
             return;
         }
 
+        if (estadoPantalla == PANTALLA_GAME_OVER) {
+            tiempoGameOver += 0.016f;
+            if (tiempoGameOver >= 3.0f) {
+                reiniciarCampania();
+            }
+            update();
+            return;
+        }
+
         if (estadoPantalla != PANTALLA_JUGANDO) {
             if (estadoPantalla == PANTALLA_INICIO && sonidoMenu != nullptr && !sonidoMenu->isPlaying()) {
                 sonidoMenu->play();
@@ -526,6 +599,9 @@ void GameWidget::actualizar()
 
         nivel()->actualizar(0.016f);
         procesarSonidosNivel();
+        if (nivel()->estaPerdido()) {
+            activarGameOver();
+        }
     }
     catch (const JuegoException&) {
         QApplication::beep();
@@ -569,6 +645,10 @@ void GameWidget::paintEvent(QPaintEvent* event)
         if (estadoPantalla == PANTALLA_PAUSA) {
             dibujarPausa(painter);
         }
+
+        if (estadoPantalla == PANTALLA_GAME_OVER) {
+            dibujarGameOver(painter);
+        }
     }
     catch (const JuegoException& error) {
         painter.fillRect(QRectF(0, 0, ANCHO_BASE, ALTO_BASE), QColor(25, 25, 25));
@@ -600,6 +680,16 @@ void GameWidget::keyPressEvent(QKeyEvent* event)
 
     if (event->key() == Qt::Key_H) {
         mostrarAyuda = !mostrarAyuda;
+        return;
+    }
+
+    if (estadoPantalla == PANTALLA_GAME_OVER) {
+        if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter ||
+            event->key() == Qt::Key_Space || event->key() == Qt::Key_M ||
+            event->key() == Qt::Key_Escape) {
+            reiniciarCampania();
+            update();
+        }
         return;
     }
 
@@ -680,6 +770,12 @@ void GameWidget::mousePressEvent(QMouseEvent* event)
 
     if (estadoPantalla == PANTALLA_INTRO) {
         estadoPantalla = PANTALLA_INICIO;
+        update();
+        return;
+    }
+
+    if (estadoPantalla == PANTALLA_GAME_OVER) {
+        reiniciarCampania();
         update();
         return;
     }
