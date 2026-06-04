@@ -4,13 +4,16 @@
 #include <QWidget>
 #include <QTimer>
 #include <QKeyEvent>
+#include <QMouseEvent>
 #include <QSoundEffect>
-#include <QVector>
+#include <memory>
+#include <vector>
 #include "../logica/NivelJuego.h"
 #include "../logica/Dificultad.h"
 
 enum EstadoPantalla
 {
+    PANTALLA_INTRO,
     PANTALLA_INICIO,
     PANTALLA_JUGANDO,
     PANTALLA_PAUSA
@@ -22,28 +25,34 @@ class GameWidget : public QWidget
 
 private:
     QTimer* timer;
-    QVector<NivelJuego*> niveles;
+    std::vector<std::unique_ptr<NivelJuego>> niveles;
     int nivelActual;
     bool mostrarAyuda;
     EstadoPantalla estadoPantalla;
     TipoDificultad dificultadSeleccionada;
+    TipoPersonaje personajeSeleccionado;
     QSoundEffect* sonidoFondo;
     QSoundEffect* sonidoSalto;
     QSoundEffect* sonidoAnillo;
     QSoundEffect* sonidoColision;
     QSoundEffect* sonidoAgua;
     QSoundEffect* sonidoNivel;
+    QSoundEffect* sonidoMenu;
+    float tiempoIntro;
 
     NivelJuego* nivel();
     void cargarNiveles();
     void cargarSonidos();
     void avanzarNivel();
     void aplicarDificultadSeleccionada();
+    void aplicarPersonajeSeleccionado();
     void iniciarPartida();
     void reiniciarCampania();
     void reproducirEventoSonido(EventoSonidoJuego evento);
     void procesarSonidosNivel();
     void configurarLienzo(QPainter& painter);
+    QPointF convertirAVirtual(const QPoint& posicion) const;
+    void dibujarIntro(QPainter& painter);
     void dibujarInicio(QPainter& painter);
     void dibujarPausa(QPainter& painter);
     void dibujarMarcoJuego(QPainter& painter);
@@ -58,6 +67,7 @@ protected:
     void paintEvent(QPaintEvent* event) override;
     void keyPressEvent(QKeyEvent* event) override;
     void keyReleaseEvent(QKeyEvent* event) override;
+    void mousePressEvent(QMouseEvent* event) override;
 
 private slots:
     void actualizar();

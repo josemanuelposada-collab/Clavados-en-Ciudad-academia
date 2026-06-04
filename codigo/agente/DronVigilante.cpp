@@ -1,4 +1,6 @@
 #include "DronVigilante.h"
+#include "../fisicas/ModelosFisicos.h"
+#include "../render/SpriteCache.h"
 #include <algorithm>
 #include <cmath>
 
@@ -9,8 +11,17 @@ DronVigilante::DronVigilante(float xInicial, float yInicial)
       tiempo(0.0f),
       tiempoDecision(0.0f),
       aciertosJugador(0),
-      estado(PATRULLA)
+      estado(PATRULLA),
+      memoriaCantidad(0),
+      memoriaIndice(0),
+      sumaErrores(0.0f),
+      ultimoError(160.0f),
+      tendenciaError(0.0f),
+      objetivoSuavizado(xInicial),
+      presionActual(0.0f),
+      tiempoDisparo(0.0f)
 {
+    memoriaErrores.fill(0.0f);
     spriteNormal.load(":/recursos/sprites/dron_normal.png");
     spriteEscaneo.load(":/recursos/sprites/dron_escaneo.png");
     spriteAlerta.load(":/recursos/sprites/dron_alerta.png");
@@ -38,7 +49,7 @@ void DronVigilante::actualizar(float dt, const Personaje& jugador)
 void DronVigilante::dibujar(QPainter& painter)
 {
     QPixmap sprite = spriteNormal;
-    if (estado == ESCANEO && !spriteEscaneo.isNull()) {
+    if ((estado == ESCANEO || estado == ANTICIPA) && !spriteEscaneo.isNull()) {
         sprite = spriteEscaneo;
     }
     else if (estado == INTERCEPTA && !spriteAlerta.isNull()) {
@@ -47,7 +58,7 @@ void DronVigilante::dibujar(QPainter& painter)
 
     QRect area = rect().toRect();
     if (!sprite.isNull()) {
-        painter.drawPixmap(area, sprite.scaled(area.size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        SpriteCache::dibujarAjustado(painter, sprite, area, "dron");
     }
     else {
         painter.setPen(Qt::black);
@@ -66,26 +77,37 @@ PercepcionDron DronVigilante::percibir(const Personaje& jugador) const
 {
     float dx = jugador.centro().x() - centro().x();
     float dy = jugador.centro().y() - centro().y();
-    float distancia = std::sqrt(dx * dx + dy * dy);
-    float velocidadJugador = std::sqrt(jugador.getVX() * jugador.getVX() + jugador.getVY() * jugador.getVY());
+    float distancia2 = FisicaJuego::distanciaCuadrada(dx, dy);
+    float rapidez2 = FisicaJuego::rapidezCuadrada(jugador.getVX(), jugador.getVY());
+    float presion = calcularPresionDificultad();
+    float horizonte = 0.24f + presion * 0.42f;
 
     PercepcionDron percepcion;
-    percepcion.distanciaJugador = distancia;
-    percepcion.velocidadJugador = velocidadJugador;
-    percepcion.jugadorCerca = distancia < 230.0f;
+    percepcion.distanciaJugador = std::sqrt(distancia2);
+    percepcion.velocidadJugador = std::sqrt(rapidez2);
+    percepcion.distanciaCuadrada = distancia2;
+    percepcion.rapidezCuadrada = rapidez2;
+    percepcion.dxJugador = dx;
+    percepcion.dyJugador = dy;
+    percepcion.prediccionX = jugador.centro().x() + jugador.getVX() * horizonte;
+    percepcion.presionAprendida = presion;
+    percepcion.jugadorCerca = distancia2 < 230.0f * 230.0f;
+    percepcion.jugadorRapido = rapidez2 > 520.0f * 520.0f;
     percepcion.jugadorImpulsando = jugador.estaUsandoImpulso();
     return percepcion;
 }
 
 EstadoDron DronVigilante::razonar(const PercepcionDron& percepcion)
 {
-    float presion = calcularPresionDificultad();
-
-    if (percepcion.jugadorCerca && (percepcion.jugadorImpulsando || percepcion.velocidadJugador > 520.0f || presion > 0.55f)) {
+    if (percepcion.jugadorCerca && (percepcion.jugadorImpulsando || percepcion.jugadorRapido || percepcion.presionAprendida > 0.62f)) {
         return INTERCEPTA;
     }
 
-    if (percepcion.jugadorCerca) {
+    if (percepcion.distanciaCuadrada < 330.0f * 330.0f && (percepcion.presionAprendida > 0.35f || std::abs(percepcion.dxJugador) < 190.0f)) {
+        return ANTICIPA;
+    }
+
+    if (percepcion.distanciaCuadrada < 330.0f * 330.0f) {
         return ESCANEO;
     }
 
@@ -95,25 +117,47 @@ EstadoDron DronVigilante::razonar(const PercepcionDron& percepcion)
 void DronVigilante::actuar(float dt, const Personaje& jugador)
 {
     if (estado == PATRULLA) {
-        x = xBase + 130.0f * std::sin(tiempo * 1.2f);
+        float amplitud = 112.0f + presionActual * 36.0f;
+        x = xBase + amplitud * std::sin(tiempo * 1.2f);
         return;
     }
 
-    float objetivo = jugador.centro().x() - ancho / 2.0f;
-    float direccion = objetivo > x ? 1.0f : -1.0f;
-    float multiplicador = estado == INTERCEPTA ? 1.85f : 1.0f;
+    PercepcionDron percepcion = percibir(jugador);
+    float objetivo = std::clamp(percepcion.prediccionX - ancho / 2.0f, 0.0f, 800.0f - ancho);
+    objetivoSuavizado = objetivoSuavizado * 0.82f + objetivo * 0.18f;
 
-    if (std::abs(objetivo - x) > 8.0f) {
-        x += direccion * velocidad * multiplicador * dt;
+    float multiplicador = 1.0f + percepcion.presionAprendida * 0.32f;
+    if (estado == ANTICIPA) {
+        multiplicador = 1.42f + percepcion.presionAprendida * 0.45f;
     }
+    else if (estado == INTERCEPTA) {
+        multiplicador = 2.02f + percepcion.presionAprendida * 0.85f;
+    }
+
+    float pasoMaximo = velocidad * multiplicador * dt;
+    float delta = std::clamp(objetivoSuavizado - x, -pasoMaximo, pasoMaximo);
+    x += delta;
 }
 
 void DronVigilante::aprender(float errorEntrada)
 {
-    memoriaErrores.push_back(errorEntrada);
-    if (memoriaErrores.size() > 8) {
-        memoriaErrores.pop_front();
+    float error = std::clamp(errorEntrada, 0.0f, 220.0f);
+
+    if (memoriaCantidad < TAMANO_MEMORIA) {
+        memoriaErrores[memoriaIndice] = error;
+        sumaErrores += error;
+        memoriaCantidad++;
     }
+    else {
+        sumaErrores -= memoriaErrores[memoriaIndice];
+        memoriaErrores[memoriaIndice] = error;
+        sumaErrores += error;
+    }
+
+    tendenciaError = error - ultimoError;
+    ultimoError = error;
+    memoriaIndice = (memoriaIndice + 1) % TAMANO_MEMORIA;
+    presionActual = calcularPresionDificultad();
 }
 
 void DronVigilante::registrarAciertoJugador()
@@ -125,6 +169,8 @@ void DronVigilante::reiniciarMemoriaParcial()
 {
     estado = PATRULLA;
     tiempoDecision = 0.0f;
+    objetivoSuavizado = x;
+    tiempoDisparo = 0.0f;
 }
 
 void DronVigilante::colocarEn(float nuevoX, float nuevoY)
@@ -132,23 +178,77 @@ void DronVigilante::colocarEn(float nuevoX, float nuevoY)
     xBase = nuevoX;
     x = nuevoX;
     y = nuevoY;
+    if (std::abs(objetivoSuavizado - nuevoX) > 260.0f) {
+        objetivoSuavizado = nuevoX;
+    }
+}
+
+void DronVigilante::colocarY(float nuevoY)
+{
+    y = nuevoY;
+}
+
+bool DronVigilante::solicitarDisparo(float dt, const Personaje& jugador)
+{
+    tiempoDisparo += dt;
+
+    if (!jugador.estaEnAire() || estado == PATRULLA) {
+        return false;
+    }
+
+    PercepcionDron percepcion = percibir(jugador);
+    if (percepcion.distanciaCuadrada > 520.0f * 520.0f) {
+        return false;
+    }
+
+    float espera = std::clamp(2.20f - percepcion.presionAprendida * 0.82f, 1.15f, 2.20f);
+    if (estado == INTERCEPTA) {
+        espera *= 0.82f;
+    }
+
+    if (tiempoDisparo >= espera) {
+        tiempoDisparo = 0.0f;
+        return true;
+    }
+
+    return false;
+}
+
+QPointF DronVigilante::calcularVectorDisparo(const Personaje& jugador, float rapidez) const
+{
+    float presion = calcularPresionDificultad();
+    QPointF origen = centro();
+    float dxActual = jugador.centro().x() - origen.x();
+    float dyActual = jugador.centro().y() - origen.y();
+    float distanciaActual = std::sqrt(FisicaJuego::distanciaCuadrada(dxActual, dyActual));
+    float rapidezJugador = std::sqrt(FisicaJuego::rapidezCuadrada(jugador.getVX(), jugador.getVY()));
+    float rapidezRelativa = std::max(90.0f, rapidez * 0.88f + rapidezJugador * 0.58f);
+    float horizonte = std::clamp(distanciaActual / rapidezRelativa + presion * 0.16f, 0.18f, 1.45f);
+
+    QPointF objetivo(jugador.centro().x() + jugador.getVX() * horizonte,
+                     jugador.centro().y() + jugador.getVY() * horizonte + 0.5f * 30.0f * horizonte * horizonte);
+    float dx = objetivo.x() - origen.x();
+    float dy = objetivo.y() - origen.y();
+    float distancia = std::sqrt(FisicaJuego::distanciaCuadrada(dx, dy));
+
+    if (distancia < 1.0f) {
+        return QPointF(0.0f, rapidez);
+    }
+
+    return QPointF(dx / distancia * rapidez, dy / distancia * rapidez);
 }
 
 float DronVigilante::calcularPresionDificultad() const
 {
-    if (memoriaErrores.isEmpty()) {
-        return aciertosJugador > 0 ? 0.4f : 0.0f;
+    if (memoriaCantidad == 0) {
+        return std::min(aciertosJugador * 0.12f, 0.40f);
     }
 
-    float suma = 0.0f;
-    for (float error : memoriaErrores) {
-        suma += error;
-    }
-
-    float promedio = suma / memoriaErrores.size();
+    float promedio = sumaErrores / memoriaCantidad;
     float precisionJugador = 1.0f - std::min(promedio / 160.0f, 1.0f);
     float racha = std::min(aciertosJugador * 0.12f, 0.36f);
-    return std::min(precisionJugador + racha, 1.0f);
+    float tendencia = tendenciaError < -4.0f ? 0.10f : tendenciaError > 8.0f ? -0.06f : 0.0f;
+    return std::clamp(precisionJugador + racha + tendencia, 0.0f, 1.0f);
 }
 
 EstadoDron DronVigilante::getEstado() const

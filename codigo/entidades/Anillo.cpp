@@ -1,4 +1,5 @@
 #include "Anillo.h"
+#include "../render/SpriteCache.h"
 #include <cmath>
 
 Anillo::Anillo(float xInicial, float yInicial)
@@ -23,7 +24,7 @@ void Anillo::dibujar(QPainter& painter)
 
     QRect area = rect().toRect();
     if (!sprite.isNull()) {
-        painter.drawPixmap(area, sprite.scaled(area.size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        SpriteCache::dibujarAjustado(painter, sprite, area, "anillo");
     }
     else {
         painter.setPen(QColor(220, 170, 0));

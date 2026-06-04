@@ -1,4 +1,5 @@
 #include "Plataforma.h"
+#include "../render/SpriteCache.h"
 #include <cmath>
 
 Plataforma::Plataforma()
@@ -25,15 +26,7 @@ void Plataforma::dibujar(QPainter& painter)
     QRectF area(x, y, ancho, alto);
 
     if (!spritePlataforma.isNull()) {
-        painter.drawPixmap(
-            area.toRect(),
-            spritePlataforma.scaled(
-                area.width(),
-                area.height(),
-                Qt::KeepAspectRatio,
-                Qt::SmoothTransformation
-                )
-            );
+        SpriteCache::dibujarAjustado(painter, spritePlataforma, area.toRect(), "plataforma");
     }
     else {
         painter.setPen(Qt::black);

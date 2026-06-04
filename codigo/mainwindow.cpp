@@ -11,7 +11,7 @@ MainWindow::MainWindow(QWidget *parent)
     GameWidget* juego = new GameWidget(this);
     setCentralWidget(juego);
 
-    resize(800, 600);
+    resize(1280, 720);
     setWindowTitle("Clavados en Ciudad Academia");
 }
 

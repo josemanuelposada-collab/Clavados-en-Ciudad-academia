@@ -4,6 +4,7 @@
         <file>recursos/audio/colision_alerta.wav</file>
         <file>recursos/audio/entrada_agua.wav</file>
         <file>recursos/audio/fondo_entrenamiento.wav</file>
+        <file>recursos/audio/intro_menu_epico.wav</file>
         <file>recursos/audio/nivel_superado.wav</file>
         <file>recursos/audio/salto_impulso.wav</file>
         <file>recursos/sprites/advertencia.png</file>
@@ -12,32 +13,205 @@
         <file>recursos/sprites/anillo_brillante.png</file>
         <file>recursos/sprites/anillo_dorado.png</file>
         <file>recursos/sprites/bloqueo.png</file>
+        <file>recursos/sprites/banderines_academia.png</file>
+        <file>recursos/sprites/brillo_agua.png</file>
+        <file>recursos/sprites/burbujas_entrada.png</file>
+        <file>recursos/sprites/carriles_piscina.png</file>
+        <file>recursos/sprites/chapuzon_fuerte.png</file>
+        <file>recursos/sprites/chapuzon_limpio.png</file>
+        <file>recursos/sprites/chapuzon_medio.png</file>
+        <file>recursos/sprites/decoracion_piscina_der.png</file>
+        <file>recursos/sprites/decoracion_piscina_izq.png</file>
         <file>recursos/sprites/dron_alerta.png</file>
         <file>recursos/sprites/dron_escaneo.png</file>
         <file>recursos/sprites/dron_normal.png</file>
+        <file>recursos/sprites/edificio_cristal_academia.png</file>
+        <file>recursos/sprites/fondo_ciudad_academia.png</file>
+        <file>recursos/sprites/fondo_vertical_entrenamiento.png</file>
+        <file>recursos/sprites/fondo_vertical_torre.png</file>
+        <file>recursos/sprites/gradas_academia.png</file>
+        <file>recursos/sprites/hud_advertencia.png</file>
+        <file>recursos/sprites/hud_barra_progreso.png</file>
+        <file>recursos/sprites/hud_corazon_lleno.png</file>
+        <file>recursos/sprites/hud_corazon_medio.png</file>
+        <file>recursos/sprites/hud_corazon_vacio.png</file>
+        <file>recursos/sprites/hud_pausa.png</file>
+        <file>recursos/sprites/hud_reiniciar.png</file>
         <file>recursos/sprites/obstaculo_barril.png</file>
         <file>recursos/sprites/obstaculo_boya.png</file>
         <file>recursos/sprites/obstaculo_caja.png</file>
         <file>recursos/sprites/obstaculo_mina.png</file>
         <file>recursos/sprites/peligro_electrico.png</file>
         <file>recursos/sprites/personaje_caida.png</file>
+        <file>recursos/sprites/personaje_accelerator_caida.png</file>
+        <file>recursos/sprites/personaje_accelerator_entrada_agua.png</file>
+        <file>recursos/sprites/personaje_accelerator_idle.png</file>
+        <file>recursos/sprites/personaje_accelerator_impulso.png</file>
+        <file>recursos/sprites/personaje_accelerator_lateral_der.png</file>
+        <file>recursos/sprites/personaje_accelerator_lateral_izq.png</file>
+        <file>recursos/sprites/personaje_accelerator_salto.png</file>
+        <file>recursos/sprites/personaje_accelerator_splash.png</file>
+        <file>recursos/sprites/personaje_darkmatter_caida.png</file>
+        <file>recursos/sprites/personaje_darkmatter_entrada_agua.png</file>
+        <file>recursos/sprites/personaje_darkmatter_idle.png</file>
+        <file>recursos/sprites/personaje_darkmatter_impulso.png</file>
+        <file>recursos/sprites/personaje_darkmatter_lateral_der.png</file>
+        <file>recursos/sprites/personaje_darkmatter_lateral_izq.png</file>
+        <file>recursos/sprites/personaje_darkmatter_salto.png</file>
+        <file>recursos/sprites/personaje_darkmatter_splash.png</file>
         <file>recursos/sprites/personaje_entrada_agua.png</file>
         <file>recursos/sprites/personaje_idle.png</file>
         <file>recursos/sprites/personaje_impulso.png</file>
         <file>recursos/sprites/personaje_lateral_der.png</file>
         <file>recursos/sprites/personaje_lateral_izq.png</file>
+        <file>recursos/sprites/personaje_mugino_caida.png</file>
+        <file>recursos/sprites/personaje_mugino_entrada_agua.png</file>
+        <file>recursos/sprites/personaje_mugino_idle.png</file>
+        <file>recursos/sprites/personaje_mugino_impulso.png</file>
+        <file>recursos/sprites/personaje_mugino_lateral_der.png</file>
+        <file>recursos/sprites/personaje_mugino_lateral_izq.png</file>
+        <file>recursos/sprites/personaje_mugino_salto.png</file>
+        <file>recursos/sprites/personaje_mugino_splash.png</file>
         <file>recursos/sprites/personaje_salto.png</file>
         <file>recursos/sprites/personaje_splash.png</file>
         <file>recursos/sprites/plataforma_alta.png</file>
         <file>recursos/sprites/plataforma_baja.png</file>
         <file>recursos/sprites/plataforma_media.png</file>
         <file>recursos/sprites/piscina_ciudad_academia.png</file>
+        <file>recursos/sprites/piscina_final_premium.png</file>
+        <file>recursos/sprites/salpicadura_media_pixel.png</file>
+        <file>recursos/sprites/salpicadura_pequena.png</file>
         <file>recursos/sprites/salpicadura_grande.png</file>
+        <file>recursos/sprites/textura_pixel_overlay.png</file>
+        <file>recursos/sprites/textura_tierra_borde.png</file>
         <file>recursos/sprites/temporizador.png</file>
+        <file>recursos/sprites/torre_salto_epica.png</file>
         <file>recursos/sprites/torre_columna_luz.png</file>
+        <file>recursos/sprites/agua_profunda.png</file>
         <file>recursos/sprites/velocidad_derecha.png</file>
         <file>recursos/sprites/velocidad_izquierda.png</file>
         <file>recursos/sprites/viento_lateral.png</file>
         <file>recursos/sprites/viento_turbulencia.png</file>
+
+        <file>recursos/sprites/personajes/accelerator/01_accelerator_salto_desde_altura_01_parado.png</file>
+        <file>recursos/sprites/personajes/accelerator/02_accelerator_salto_desde_altura_02_salto.png</file>
+        <file>recursos/sprites/personajes/accelerator/03_accelerator_caida_vertical_01.png</file>
+        <file>recursos/sprites/personajes/accelerator/04_accelerator_caida_vertical_02.png</file>
+        <file>recursos/sprites/personajes/accelerator/05_accelerator_caida_vertical_03.png</file>
+        <file>recursos/sprites/personajes/accelerator/06_accelerator_correccion_lateral_aire_01_izquierda.png</file>
+        <file>recursos/sprites/personajes/accelerator/07_accelerator_correccion_lateral_aire_02_izquierda.png</file>
+        <file>recursos/sprites/personajes/accelerator/08_accelerator_correccion_lateral_aire_03_centro.png</file>
+        <file>recursos/sprites/personajes/accelerator/09_accelerator_correccion_lateral_aire_04_derecha.png</file>
+        <file>recursos/sprites/personajes/accelerator/10_accelerator_correccion_lateral_aire_05_derecha.png</file>
+        <file>recursos/sprites/personajes/accelerator/11_accelerator_voltereta_tuck_01.png</file>
+        <file>recursos/sprites/personajes/accelerator/12_accelerator_voltereta_tuck_02.png</file>
+        <file>recursos/sprites/personajes/accelerator/13_accelerator_voltereta_tuck_03.png</file>
+        <file>recursos/sprites/personajes/accelerator/14_accelerator_clavado_inverso_01.png</file>
+        <file>recursos/sprites/personajes/accelerator/15_accelerator_clavado_inverso_02.png</file>
+        <file>recursos/sprites/personajes/accelerator/16_accelerator_clavado_especial_01.png</file>
+        <file>recursos/sprites/personajes/accelerator/17_accelerator_clavado_especial_02.png</file>
+        <file>recursos/sprites/personajes/accelerator/18_accelerator_clavado_espiral_01.png</file>
+        <file>recursos/sprites/personajes/accelerator/19_accelerator_clavado_espiral_02.png</file>
+        <file>recursos/sprites/personajes/accelerator/20_accelerator_clavado_espiral_03.png</file>
+        <file>recursos/sprites/personajes/accelerator/21_accelerator_clavado_espiral_04.png</file>
+        <file>recursos/sprites/personajes/accelerator/22_accelerator_entrada_profunda_splash_01.png</file>
+        <file>recursos/sprites/personajes/accelerator/23_accelerator_entrada_profunda_splash_02.png</file>
+        <file>recursos/sprites/personajes/accelerator/24_accelerator_entrada_profunda_splash_03.png</file>
+        <file>recursos/sprites/personajes/accelerator/25_accelerator_entrada_profunda_splash_04.png</file>
+        <file>recursos/sprites/personajes/accelerator/26_accelerator_emerger_del_agua_01.png</file>
+        <file>recursos/sprites/personajes/accelerator/27_accelerator_emerger_del_agua_02.png</file>
+        <file>recursos/sprites/personajes/accelerator/28_accelerator_emerger_del_agua_03.png</file>
+        <file>recursos/sprites/personajes/accelerator/29_accelerator_emerger_del_agua_04.png</file>
+        <file>recursos/sprites/personajes/accelerator/30_accelerator_emerger_del_agua_05.png</file>
+        <file>recursos/sprites/personajes/dark_matter/01_dark_matter_salto_desde_altura_01_parado.png</file>
+        <file>recursos/sprites/personajes/dark_matter/02_dark_matter_salto_desde_altura_02_salto.png</file>
+        <file>recursos/sprites/personajes/dark_matter/03_dark_matter_caida_vertical_01.png</file>
+        <file>recursos/sprites/personajes/dark_matter/04_dark_matter_caida_vertical_02.png</file>
+        <file>recursos/sprites/personajes/dark_matter/05_dark_matter_caida_vertical_03.png</file>
+        <file>recursos/sprites/personajes/dark_matter/06_dark_matter_correccion_lateral_aire_01_izquierda.png</file>
+        <file>recursos/sprites/personajes/dark_matter/07_dark_matter_correccion_lateral_aire_02_izquierda.png</file>
+        <file>recursos/sprites/personajes/dark_matter/08_dark_matter_correccion_lateral_aire_03_centro.png</file>
+        <file>recursos/sprites/personajes/dark_matter/09_dark_matter_correccion_lateral_aire_04_derecha.png</file>
+        <file>recursos/sprites/personajes/dark_matter/10_dark_matter_correccion_lateral_aire_05_derecha.png</file>
+        <file>recursos/sprites/personajes/dark_matter/11_dark_matter_voltereta_tuck_01.png</file>
+        <file>recursos/sprites/personajes/dark_matter/12_dark_matter_voltereta_tuck_02.png</file>
+        <file>recursos/sprites/personajes/dark_matter/13_dark_matter_voltereta_tuck_03.png</file>
+        <file>recursos/sprites/personajes/dark_matter/14_dark_matter_clavado_inverso_01.png</file>
+        <file>recursos/sprites/personajes/dark_matter/15_dark_matter_clavado_inverso_02.png</file>
+        <file>recursos/sprites/personajes/dark_matter/16_dark_matter_clavado_especial_01.png</file>
+        <file>recursos/sprites/personajes/dark_matter/17_dark_matter_clavado_especial_02.png</file>
+        <file>recursos/sprites/personajes/dark_matter/18_dark_matter_clavado_espiral_01.png</file>
+        <file>recursos/sprites/personajes/dark_matter/19_dark_matter_clavado_espiral_02.png</file>
+        <file>recursos/sprites/personajes/dark_matter/20_dark_matter_clavado_espiral_03.png</file>
+        <file>recursos/sprites/personajes/dark_matter/21_dark_matter_clavado_espiral_04.png</file>
+        <file>recursos/sprites/personajes/dark_matter/22_dark_matter_entrada_profunda_splash_01.png</file>
+        <file>recursos/sprites/personajes/dark_matter/23_dark_matter_entrada_profunda_splash_02.png</file>
+        <file>recursos/sprites/personajes/dark_matter/24_dark_matter_entrada_profunda_splash_03.png</file>
+        <file>recursos/sprites/personajes/dark_matter/25_dark_matter_entrada_profunda_splash_04.png</file>
+        <file>recursos/sprites/personajes/dark_matter/26_dark_matter_emerger_del_agua_01.png</file>
+        <file>recursos/sprites/personajes/dark_matter/27_dark_matter_emerger_del_agua_02.png</file>
+        <file>recursos/sprites/personajes/dark_matter/28_dark_matter_emerger_del_agua_03.png</file>
+        <file>recursos/sprites/personajes/dark_matter/29_dark_matter_emerger_del_agua_04.png</file>
+        <file>recursos/sprites/personajes/dark_matter/30_dark_matter_emerger_del_agua_05.png</file>
+        <file>recursos/sprites/personajes/mikoto_misaka/01_mikoto_misaka_salto_desde_altura_01_parado.png</file>
+        <file>recursos/sprites/personajes/mikoto_misaka/02_mikoto_misaka_salto_desde_altura_02_salto.png</file>
+        <file>recursos/sprites/personajes/mikoto_misaka/03_mikoto_misaka_caida_vertical_01.png</file>
+        <file>recursos/sprites/personajes/mikoto_misaka/04_mikoto_misaka_caida_vertical_02.png</file>
+        <file>recursos/sprites/personajes/mikoto_misaka/05_mikoto_misaka_caida_vertical_03.png</file>
+        <file>recursos/sprites/personajes/mikoto_misaka/06_mikoto_misaka_correccion_lateral_aire_01_izquierda.png</file>
+        <file>recursos/sprites/personajes/mikoto_misaka/07_mikoto_misaka_correccion_lateral_aire_02_izquierda.png</file>
+        <file>recursos/sprites/personajes/mikoto_misaka/08_mikoto_misaka_correccion_lateral_aire_03_centro.png</file>
+        <file>recursos/sprites/personajes/mikoto_misaka/09_mikoto_misaka_correccion_lateral_aire_04_derecha.png</file>
+        <file>recursos/sprites/personajes/mikoto_misaka/10_mikoto_misaka_correccion_lateral_aire_05_derecha.png</file>
+        <file>recursos/sprites/personajes/mikoto_misaka/11_mikoto_misaka_voltereta_tuck_01.png</file>
+        <file>recursos/sprites/personajes/mikoto_misaka/12_mikoto_misaka_voltereta_tuck_02.png</file>
+        <file>recursos/sprites/personajes/mikoto_misaka/13_mikoto_misaka_voltereta_tuck_03.png</file>
+        <file>recursos/sprites/personajes/mikoto_misaka/14_mikoto_misaka_clavado_inverso_01.png</file>
+        <file>recursos/sprites/personajes/mikoto_misaka/15_mikoto_misaka_clavado_inverso_02.png</file>
+        <file>recursos/sprites/personajes/mikoto_misaka/16_mikoto_misaka_clavado_especial_01.png</file>
+        <file>recursos/sprites/personajes/mikoto_misaka/17_mikoto_misaka_clavado_especial_02.png</file>
+        <file>recursos/sprites/personajes/mikoto_misaka/18_mikoto_misaka_clavado_espiral_01.png</file>
+        <file>recursos/sprites/personajes/mikoto_misaka/19_mikoto_misaka_clavado_espiral_02.png</file>
+        <file>recursos/sprites/personajes/mikoto_misaka/20_mikoto_misaka_clavado_espiral_03.png</file>
+        <file>recursos/sprites/personajes/mikoto_misaka/21_mikoto_misaka_clavado_espiral_04.png</file>
+        <file>recursos/sprites/personajes/mikoto_misaka/22_mikoto_misaka_entrada_profunda_splash_01.png</file>
+        <file>recursos/sprites/personajes/mikoto_misaka/23_mikoto_misaka_entrada_profunda_splash_02.png</file>
+        <file>recursos/sprites/personajes/mikoto_misaka/24_mikoto_misaka_entrada_profunda_splash_03.png</file>
+        <file>recursos/sprites/personajes/mikoto_misaka/25_mikoto_misaka_entrada_profunda_splash_04.png</file>
+        <file>recursos/sprites/personajes/mikoto_misaka/26_mikoto_misaka_emerger_del_agua_01.png</file>
+        <file>recursos/sprites/personajes/mikoto_misaka/27_mikoto_misaka_emerger_del_agua_02.png</file>
+        <file>recursos/sprites/personajes/mikoto_misaka/28_mikoto_misaka_emerger_del_agua_03.png</file>
+        <file>recursos/sprites/personajes/mikoto_misaka/29_mikoto_misaka_emerger_del_agua_04.png</file>
+        <file>recursos/sprites/personajes/mikoto_misaka/30_mikoto_misaka_emerger_del_agua_05.png</file>
+        <file>recursos/sprites/personajes/mugino/01_mugino_salto_desde_altura_01_parado.png</file>
+        <file>recursos/sprites/personajes/mugino/02_mugino_salto_desde_altura_02_salto.png</file>
+        <file>recursos/sprites/personajes/mugino/03_mugino_caida_vertical_01.png</file>
+        <file>recursos/sprites/personajes/mugino/04_mugino_caida_vertical_02.png</file>
+        <file>recursos/sprites/personajes/mugino/05_mugino_caida_vertical_03.png</file>
+        <file>recursos/sprites/personajes/mugino/06_mugino_correccion_lateral_aire_01_izquierda.png</file>
+        <file>recursos/sprites/personajes/mugino/07_mugino_correccion_lateral_aire_02_izquierda.png</file>
+        <file>recursos/sprites/personajes/mugino/08_mugino_correccion_lateral_aire_03_centro.png</file>
+        <file>recursos/sprites/personajes/mugino/09_mugino_correccion_lateral_aire_04_derecha.png</file>
+        <file>recursos/sprites/personajes/mugino/10_mugino_correccion_lateral_aire_05_derecha.png</file>
+        <file>recursos/sprites/personajes/mugino/11_mugino_voltereta_tuck_01.png</file>
+        <file>recursos/sprites/personajes/mugino/12_mugino_voltereta_tuck_02.png</file>
+        <file>recursos/sprites/personajes/mugino/13_mugino_voltereta_tuck_03.png</file>
+        <file>recursos/sprites/personajes/mugino/14_mugino_clavado_inverso_01.png</file>
+        <file>recursos/sprites/personajes/mugino/15_mugino_clavado_inverso_02.png</file>
+        <file>recursos/sprites/personajes/mugino/16_mugino_clavado_especial_01.png</file>
+        <file>recursos/sprites/personajes/mugino/17_mugino_clavado_especial_02.png</file>
+        <file>recursos/sprites/personajes/mugino/18_mugino_clavado_espiral_01.png</file>
+        <file>recursos/sprites/personajes/mugino/19_mugino_clavado_espiral_02.png</file>
+        <file>recursos/sprites/personajes/mugino/20_mugino_clavado_espiral_03.png</file>
+        <file>recursos/sprites/personajes/mugino/21_mugino_clavado_espiral_04.png</file>
+        <file>recursos/sprites/personajes/mugino/22_mugino_entrada_profunda_splash_01.png</file>
+        <file>recursos/sprites/personajes/mugino/23_mugino_entrada_profunda_splash_02.png</file>
+        <file>recursos/sprites/personajes/mugino/24_mugino_entrada_profunda_splash_03.png</file>
+        <file>recursos/sprites/personajes/mugino/25_mugino_entrada_profunda_splash_04.png</file>
+        <file>recursos/sprites/personajes/mugino/26_mugino_emerger_del_agua_01.png</file>
+        <file>recursos/sprites/personajes/mugino/27_mugino_emerger_del_agua_02.png</file>
+        <file>recursos/sprites/personajes/mugino/28_mugino_emerger_del_agua_03.png</file>
+        <file>recursos/sprites/personajes/mugino/29_mugino_emerger_del_agua_04.png</file>
+        <file>recursos/sprites/personajes/mugino/30_mugino_emerger_del_agua_05.png</file>
     </qresource>
 </RCC>

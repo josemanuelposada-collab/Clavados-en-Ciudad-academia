@@ -6,11 +6,14 @@ SOURCES += \
     agente/DronVigilante.cpp \
     entidades/Anillo.cpp \
     entidades/Entidad.cpp \
+    entidades/Moneda.cpp \
     entidades/Obstaculo.cpp \
     entidades/Personaje.cpp \
     entidades/Plataforma.cpp \
+    entidades/ProyectilDron.cpp \
     fisicas/ModelosFisicos.cpp \
     gui/GameWidget.cpp \
+    render/SpriteCache.cpp \
     logica/Dificultad.cpp \
     logica/NivelRutaAnillos.cpp \
     logica/NivelPiscinaEntrenamiento.cpp \
@@ -21,11 +24,14 @@ HEADERS += \
     agente/DronVigilante.h \
     entidades/Anillo.h \
     entidades/Entidad.h \
+    entidades/Moneda.h \
     entidades/Obstaculo.h \
     entidades/Personaje.h \
     entidades/Plataforma.h \
+    entidades/ProyectilDron.h \
     fisicas/ModelosFisicos.h \
     gui/GameWidget.h \
+    render/SpriteCache.h \
     logica/Dificultad.h \
     logica/JuegoException.h \
     logica/NivelJuego.h \
