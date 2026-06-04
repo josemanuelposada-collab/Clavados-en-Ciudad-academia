@@ -10,6 +10,7 @@ SOURCES += \
     entidades/Obstaculo.cpp \
     entidades/Personaje.cpp \
     entidades/Plataforma.cpp \
+    entidades/ProyectilDron.cpp \
     fisicas/ModelosFisicos.cpp \
     gui/GameWidget.cpp \
     render/SpriteCache.cpp \
@@ -27,6 +28,7 @@ HEADERS += \
     entidades/Obstaculo.h \
     entidades/Personaje.h \
     entidades/Plataforma.h \
+    entidades/ProyectilDron.h \
     fisicas/ModelosFisicos.h \
     gui/GameWidget.h \
     render/SpriteCache.h \

@@ -24,6 +24,7 @@ GameWidget::GameWidget(QWidget* parent)
       mostrarAyuda(true),
       estadoPantalla(PANTALLA_INTRO),
       dificultadSeleccionada(NORMAL),
+      personajeSeleccionado(PERSONAJE_MIKOTO),
       sonidoFondo(nullptr),
       sonidoSalto(nullptr),
       sonidoAnillo(nullptr),
@@ -62,6 +63,7 @@ NivelJuego* GameWidget::nivel()
 
 void GameWidget::cargarNiveles()
 {
+    niveles.reserve(2);
     niveles.push_back(std::make_unique<NivelPiscinaEntrenamiento>());
     niveles.push_back(std::make_unique<NivelRutaAnillos>());
 }
@@ -123,9 +125,17 @@ void GameWidget::aplicarDificultadSeleccionada()
     }
 }
 
+void GameWidget::aplicarPersonajeSeleccionado()
+{
+    for (const auto& nivelJuego : niveles) {
+        nivelJuego->configurarPersonaje(personajeSeleccionado);
+    }
+}
+
 void GameWidget::iniciarPartida()
 {
     aplicarDificultadSeleccionada();
+    aplicarPersonajeSeleccionado();
     nivelActual = 0;
     estadoPantalla = PANTALLA_JUGANDO;
     mostrarAyuda = false;
@@ -281,29 +291,29 @@ void GameWidget::dibujarInicio(QPainter& painter)
 
     painter.setPen(Qt::NoPen);
     painter.setBrush(QColor(255, 215, 75));
-    painter.drawRect(QRectF(128, 116, 8, 370));
+    painter.drawRect(QRectF(96, 96, 8, 510));
     painter.setBrush(QColor(235, 252, 255, 28));
-    painter.drawRect(QRectF(148, 116, 760, 2));
-    painter.drawRect(QRectF(148, 486, 760, 2));
+    painter.drawRect(QRectF(120, 96, 840, 2));
+    painter.drawRect(QRectF(120, 606, 840, 2));
 
     QFont titulo = painter.font();
     titulo.setPointSize(38);
     titulo.setBold(true);
     painter.setFont(titulo);
     painter.setPen(QColor(235, 252, 255));
-    painter.drawText(QRectF(170, 158, 850, 72), Qt::AlignLeft | Qt::AlignVCenter, "Clavados en Ciudad Academia");
+    painter.drawText(QRectF(136, 118, 850, 72), Qt::AlignLeft | Qt::AlignVCenter, "Clavados en Ciudad Academia");
 
     QFont subtitulo = painter.font();
     subtitulo.setPointSize(14);
     subtitulo.setBold(false);
     painter.setFont(subtitulo);
     painter.setPen(QColor(198, 236, 248));
-    painter.drawText(QRectF(174, 246, 720, 68), Qt::AlignLeft | Qt::TextWordWrap,
+    painter.drawText(QRectF(140, 206, 690, 52), Qt::AlignLeft | Qt::TextWordWrap,
                      "Salta desde una torre monumental, atraviesa anillos de control y busca una entrada limpia en la piscina de Ciudad Academia.");
 
     QString dificultad = dificultadSeleccionada == FACIL ? "Facil" : dificultadSeleccionada == NORMAL ? "Normal" : "Dificil";
     painter.setPen(QColor(255, 225, 95));
-    painter.drawText(QRectF(174, 332, 480, 34), Qt::AlignLeft | Qt::AlignVCenter, "Dificultad seleccionada: " + dificultad);
+    painter.drawText(QRectF(140, 292, 360, 24), Qt::AlignLeft | Qt::AlignVCenter, "Dificultad: " + dificultad);
 
     struct OpcionDificultad {
         QRectF rect;
@@ -312,9 +322,9 @@ void GameWidget::dibujarInicio(QPainter& painter)
     };
 
     OpcionDificultad opciones[] = {
-        { QRectF(174, 356, 112, 34), "FACIL", FACIL },
-        { QRectF(302, 356, 124, 34), "NORMAL", NORMAL },
-        { QRectF(442, 356, 124, 34), "DIFICIL", DIFICIL }
+        { QRectF(140, 322, 120, 38), "FACIL", FACIL },
+        { QRectF(274, 322, 132, 38), "NORMAL", NORMAL },
+        { QRectF(420, 322, 132, 38), "DIFICIL", DIFICIL }
     };
 
     QFont opcion = painter.font();
@@ -330,32 +340,61 @@ void GameWidget::dibujarInicio(QPainter& painter)
         painter.drawText(item.rect, Qt::AlignCenter, item.texto);
     }
 
+    struct OpcionPersonaje {
+        QRectF rect;
+        QString nombre;
+        QString poder;
+        TipoPersonaje tipo;
+        QColor color;
+    };
+
+    OpcionPersonaje personajes[] = {
+        { QRectF(620, 286, 214, 56), "Mikoto", "campo electromagnetico", PERSONAJE_MIKOTO, QColor(255, 225, 95) },
+        { QRectF(850, 286, 214, 56), "Accelerator", "control vectorial", PERSONAJE_ACCELERATOR, QColor(230, 245, 255) },
+        { QRectF(620, 358, 214, 56), "Mugino", "meltdowner lateral", PERSONAJE_MUGINO, QColor(90, 240, 120) },
+        { QRectF(850, 358, 214, 56), "Dark Matter", "densidad del aire", PERSONAJE_DARK_MATTER, QColor(184, 116, 255) }
+    };
+
+    painter.setPen(QColor(255, 225, 95));
+    painter.drawText(QRectF(620, 252, 444, 26), Qt::AlignLeft | Qt::AlignVCenter, "Personaje y poder fisico");
+
+    for (const OpcionPersonaje& item : personajes) {
+        bool activo = personajeSeleccionado == item.tipo;
+        painter.setPen(QPen(activo ? item.color : QColor(120, 230, 255, 100), activo ? 3 : 1));
+        painter.setBrush(activo ? QColor(item.color.red(), item.color.green(), item.color.blue(), 38) : QColor(4, 18, 32, 130));
+        painter.drawRect(item.rect);
+        painter.setPen(activo ? item.color : QColor(226, 244, 250));
+        painter.drawText(QRectF(item.rect.x() + 14, item.rect.y() + 9, item.rect.width() - 24, 18), Qt::AlignLeft, item.nombre);
+        painter.setPen(QColor(184, 222, 234));
+        painter.drawText(QRectF(item.rect.x() + 14, item.rect.y() + 31, item.rect.width() - 24, 16), Qt::AlignLeft, item.poder);
+    }
+
     painter.setPen(Qt::NoPen);
     painter.setBrush(QColor(255, 225, 95));
-    painter.drawRect(QRectF(174, 392, 290, 54));
+    painter.drawRect(QRectF(140, 432, 330, 58));
     painter.setBrush(QColor(255, 255, 255, 36));
-    painter.drawRect(QRectF(464, 392, 74, 54));
+    painter.drawRect(QRectF(470, 432, 80, 58));
     painter.setPen(QColor(20, 28, 36));
     QFont boton = painter.font();
     boton.setPointSize(14);
     boton.setBold(true);
     painter.setFont(boton);
-    painter.drawText(QRectF(174, 392, 364, 54), Qt::AlignCenter, "ENTER  INICIAR");
+    painter.drawText(QRectF(140, 432, 410, 58), Qt::AlignCenter, "ENTER  INICIAR");
 
     QFont ayuda = painter.font();
     ayuda.setPointSize(10);
     ayuda.setBold(false);
     painter.setFont(ayuda);
     painter.setPen(QColor(222, 245, 255));
-    painter.drawText(QRectF(174, 522, 720, 24), Qt::AlignLeft, "1 Facil    2 Normal    3 Dificil    F11 Pantalla completa");
-    painter.drawText(QRectF(174, 552, 720, 24), Qt::AlignLeft, "Controles: WASD/Flechas, E frenar descenso, R reiniciar, Esc pausa");
+    painter.drawText(QRectF(140, 524, 900, 24), Qt::AlignLeft, "1 Facil   2 Normal   3 Dificil   4 Mikoto   5 Accelerator   6 Mugino   7 Dark Matter");
+    painter.drawText(QRectF(140, 554, 900, 24), Qt::AlignLeft, "Controles: WASD/Flechas, click poder fisico, R reiniciar, Esc pausa, F11 pantalla completa");
 
     painter.setPen(Qt::NoPen);
     painter.setBrush(QColor(42, 205, 238, 42));
-    painter.drawRect(QRectF(1020, 70, 26, 560));
+    painter.drawRect(QRectF(1106, 70, 26, 560));
     painter.setBrush(QColor(255, 225, 95, 185));
     for (int y = 128; y < 610; y += 72) {
-        painter.drawRect(QRectF(962, y, 132, 8));
+        painter.drawRect(QRectF(1048, y, 132, 8));
     }
 }
 
@@ -569,6 +608,15 @@ void GameWidget::keyPressEvent(QKeyEvent* event)
         aplicarDificultadSeleccionada();
     }
 
+    if (event->key() == Qt::Key_4 || event->key() == Qt::Key_5 ||
+        event->key() == Qt::Key_6 || event->key() == Qt::Key_7) {
+        personajeSeleccionado = event->key() == Qt::Key_4 ? PERSONAJE_MIKOTO :
+                                event->key() == Qt::Key_5 ? PERSONAJE_ACCELERATOR :
+                                event->key() == Qt::Key_6 ? PERSONAJE_MUGINO :
+                                                            PERSONAJE_DARK_MATTER;
+        aplicarPersonajeSeleccionado();
+    }
+
     if (estadoPantalla == PANTALLA_INICIO) {
         if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter || event->key() == Qt::Key_Space) {
             iniciarPartida();
@@ -637,28 +685,50 @@ void GameWidget::mousePressEvent(QMouseEvent* event)
     }
 
     if (estadoPantalla == PANTALLA_INICIO) {
-        if (QRectF(174, 392, 364, 54).contains(virtualPos)) {
+        if (QRectF(140, 432, 410, 58).contains(virtualPos)) {
             iniciarPartida();
             return;
         }
 
-        if (QRectF(174, 356, 112, 34).contains(virtualPos)) {
+        if (QRectF(140, 322, 120, 38).contains(virtualPos)) {
             dificultadSeleccionada = FACIL;
             aplicarDificultadSeleccionada();
             update();
             return;
         }
-        if (QRectF(302, 356, 124, 34).contains(virtualPos)) {
+        if (QRectF(274, 322, 132, 38).contains(virtualPos)) {
             dificultadSeleccionada = NORMAL;
             aplicarDificultadSeleccionada();
             update();
             return;
         }
-        if (QRectF(442, 356, 124, 34).contains(virtualPos)) {
+        if (QRectF(420, 322, 132, 38).contains(virtualPos)) {
             dificultadSeleccionada = DIFICIL;
             aplicarDificultadSeleccionada();
             update();
             return;
+        }
+
+        const QRectF areasPersonaje[] = {
+            QRectF(620, 286, 214, 56),
+            QRectF(850, 286, 214, 56),
+            QRectF(620, 358, 214, 56),
+            QRectF(850, 358, 214, 56)
+        };
+        const TipoPersonaje tipos[] = {
+            PERSONAJE_MIKOTO,
+            PERSONAJE_ACCELERATOR,
+            PERSONAJE_MUGINO,
+            PERSONAJE_DARK_MATTER
+        };
+
+        for (int i = 0; i < 4; ++i) {
+            if (areasPersonaje[i].contains(virtualPos)) {
+                personajeSeleccionado = tipos[i];
+                aplicarPersonajeSeleccionado();
+                update();
+                return;
+            }
         }
     }
 

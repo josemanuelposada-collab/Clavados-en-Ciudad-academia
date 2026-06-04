@@ -30,6 +30,7 @@ private:
     bool mostrarAyuda;
     EstadoPantalla estadoPantalla;
     TipoDificultad dificultadSeleccionada;
+    TipoPersonaje personajeSeleccionado;
     QSoundEffect* sonidoFondo;
     QSoundEffect* sonidoSalto;
     QSoundEffect* sonidoAnillo;
@@ -44,6 +45,7 @@ private:
     void cargarSonidos();
     void avanzarNivel();
     void aplicarDificultadSeleccionada();
+    void aplicarPersonajeSeleccionado();
     void iniciarPartida();
     void reiniciarCampania();
     void reproducirEventoSonido(EventoSonidoJuego evento);

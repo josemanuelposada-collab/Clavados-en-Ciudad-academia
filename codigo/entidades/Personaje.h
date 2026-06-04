@@ -2,9 +2,21 @@
 #define PERSONAJE_H
 
 #include <QPainter>
+#include <QColor>
 #include <QRectF>
 #include <QPixmap>
+#include <QString>
+#include <QStringList>
+#include <QVector>
 #include "Entidad.h"
+
+enum TipoPersonaje
+{
+    PERSONAJE_MIKOTO,
+    PERSONAJE_ACCELERATOR,
+    PERSONAJE_MUGINO,
+    PERSONAJE_DARK_MATTER
+};
 
 class Personaje : public Entidad
 {
@@ -21,17 +33,28 @@ private:
     bool derecha;
     bool impulsoActivo;
 
+    TipoPersonaje tipo;
     float energia;
     float energiaMaxima;
+    float controlLateral;
+    float factorGravedad;
+    float factorArrastre;
+    float radioPoder;
+    float atraccionMonedas;
+    float tiempoAnimacion;
+    QColor colorPoder;
 
-    QPixmap spriteIdle;
-    QPixmap spriteSalto;
-    QPixmap spriteCaida;
-    QPixmap spriteIzquierda;
-    QPixmap spriteDerecha;
-    QPixmap spriteImpulso;
-    QPixmap spriteEntradaAgua;
-    QPixmap spriteSplash;
+    QVector<QPixmap> spritesIdle;
+    QVector<QPixmap> spritesSalto;
+    QVector<QPixmap> spritesCaida;
+    QVector<QPixmap> spritesIzquierda;
+    QVector<QPixmap> spritesDerecha;
+    QVector<QPixmap> spritesImpulso;
+    QVector<QPixmap> spritesSplash;
+
+    void cargarSprites();
+    void cargarSecuencia(QVector<QPixmap>& destino, const QString& carpeta, const QStringList& archivos);
+    const QVector<QPixmap>& secuenciaActual() const;
 
 public:
     Personaje();
@@ -52,6 +75,7 @@ public:
 
     void detenerMovimiento();
     void colocarEn(float nuevoX, float nuevoY);
+    void configurarTipo(TipoPersonaje nuevoTipo);
 
     float getX() const;
     float getY() const;
@@ -61,6 +85,17 @@ public:
     float getAlto() const;
     float getEnergia() const;
     float getEnergiaMaxima() const;
+    float getMasa() const;
+    float getControlLateral() const;
+    float getFactorGravedad() const;
+    float getFactorArrastre() const;
+    float getRadioPoder() const;
+    float getAtraccionMonedas() const;
+    QColor getColorPoder() const;
+    QString getNombre() const;
+    QString getPoder() const;
+    TipoPersonaje getTipo() const;
+    QRectF hitboxAjustada() const;
 
     void setVX(float nuevoVX);
     void setVY(float nuevoVY);

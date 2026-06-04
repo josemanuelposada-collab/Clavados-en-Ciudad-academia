@@ -4,12 +4,13 @@
 #include "../entidades/Entidad.h"
 #include "../entidades/Personaje.h"
 #include <QPixmap>
-#include <QVector>
+#include <array>
 
 enum EstadoDron
 {
     PATRULLA,
     ESCANEO,
+    ANTICIPA,
     INTERCEPTA
 };
 
@@ -17,7 +18,14 @@ struct PercepcionDron
 {
     float distanciaJugador;
     float velocidadJugador;
+    float distanciaCuadrada;
+    float rapidezCuadrada;
+    float dxJugador;
+    float dyJugador;
+    float prediccionX;
+    float presionAprendida;
     bool jugadorCerca;
+    bool jugadorRapido;
     bool jugadorImpulsando;
 };
 
@@ -30,7 +38,16 @@ private:
     float tiempoDecision;
     int aciertosJugador;
     EstadoDron estado;
-    QVector<float> memoriaErrores;
+    static constexpr int TAMANO_MEMORIA = 10;
+    std::array<float, TAMANO_MEMORIA> memoriaErrores;
+    int memoriaCantidad;
+    int memoriaIndice;
+    float sumaErrores;
+    float ultimoError;
+    float tendenciaError;
+    float objetivoSuavizado;
+    float presionActual;
+    float tiempoDisparo;
 
     QPixmap spriteNormal;
     QPixmap spriteEscaneo;
@@ -50,6 +67,9 @@ public:
     void registrarAciertoJugador();
     void reiniciarMemoriaParcial();
     void colocarEn(float nuevoX, float nuevoY);
+    void colocarY(float nuevoY);
+    bool solicitarDisparo(float dt, const Personaje& jugador);
+    QPointF calcularVectorDisparo(const Personaje& jugador, float rapidez) const;
 
     float calcularPresionDificultad() const;
     EstadoDron getEstado() const;

@@ -10,6 +10,7 @@
 #include "../entidades/Personaje.h"
 #include "../entidades/Plataforma.h"
 #include "../entidades/Moneda.h"
+#include "../entidades/ProyectilDron.h"
 #include "../agente/DronVigilante.h"
 #include "Dificultad.h"
 #include "NivelJuego.h"
@@ -22,6 +23,7 @@ private:
     std::unique_ptr<Plataforma> plataforma;
     std::unique_ptr<DronVigilante> dron;
     std::vector<std::unique_ptr<Moneda>> monedas;
+    std::vector<std::unique_ptr<ProyectilDron>> proyectilesDron;
 
     QRectF piscina;
     QRectF zonaViento;
@@ -45,6 +47,13 @@ private:
     QPixmap spriteChapuzonMedio;
     QPixmap spriteChapuzonFuerte;
     QPixmap spriteBurbujas;
+    QPixmap spriteTexturaTierra;
+    QPixmap spriteDecoracionIzq;
+    QPixmap spriteDecoracionDer;
+    QPixmap spriteTexturaPixel;
+    QPixmap spriteCorazonLleno;
+    QPixmap spriteCorazonVacio;
+    QPixmap spriteAdvertenciaHud;
 
     Dificultad dificultad;
     QVector<EventoSonidoJuego> eventosSonido;
@@ -69,6 +78,8 @@ private:
     float tiempoIman;
     float cooldownIman;
     float radioIman;
+    float piscinaVelocidad;
+    float piscinaAceleracion;
 
 public:
     NivelPiscinaEntrenamiento();
@@ -89,15 +100,21 @@ public:
     void calcularPuntajePorEntrada();
     void crearMonedas();
     void actualizarMonedas(float dt);
+    void actualizarProyectilesDron(float dt);
+    void crearProyectilDron();
+    void resolverColisionProyectil(ProyectilDron& proyectil);
+    void actualizarPiscina(float dt);
     void activarIman();
     void actualizarCamara();
     void dibujarEscenario(QPainter& painter);
     void dibujarHud(QPainter& painter);
     void dibujarRafagasViento(QPainter& painter);
     void dibujarIman(QPainter& painter);
+    void dibujarProyectilesDron(QPainter& painter);
 
     void reiniciarIntento();
     void reiniciarNivel() override;
+    void configurarPersonaje(TipoPersonaje tipo) override;
 
     void cambiarDificultad(TipoDificultad tipo);
     void aplicarParametrosDificultad();

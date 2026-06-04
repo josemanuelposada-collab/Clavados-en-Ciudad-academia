@@ -5,6 +5,7 @@
 #include <QPointF>
 #include <QString>
 #include <QVector>
+#include "../entidades/Personaje.h"
 
 enum EventoSonidoJuego
 {
@@ -25,6 +26,7 @@ public:
     virtual void teclaPresionada(int tecla) = 0;
     virtual void teclaLiberada(int tecla) = 0;
     virtual void mousePresionado(const QPointF& posicion) { Q_UNUSED(posicion); }
+    virtual void configurarPersonaje(TipoPersonaje tipo) { Q_UNUSED(tipo); }
     virtual void reiniciarNivel() = 0;
     virtual bool estaSuperado() const = 0;
     virtual bool estaPerdido() const = 0;
