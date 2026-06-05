@@ -104,6 +104,7 @@ public:
 
     bool estaEnAire() const;
     bool estaUsandoImpulso() const;
+    bool estaCorrigiendoLateral() const;
 };
 
 #endif
