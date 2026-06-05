@@ -8,6 +8,8 @@
 #include <cmath>
 
 namespace {
+constexpr std::size_t MAX_PROYECTILES_DRON = 12;
+
 void panel(QPainter& painter, const QRectF& rect, const QColor& color)
 {
     painter.setPen(Qt::NoPen);
@@ -69,6 +71,10 @@ void dibujarPisoAlrededorPiscina(QPainter& painter,
 NivelRutaAnillos::NivelRutaAnillos()
     : jugador(std::make_unique<Personaje>()),
       dron(std::make_unique<DronVigilante>(385.0f, 160.0f)),
+      teclaIzquierda(false),
+      teclaDerecha(false),
+      teclaArriba(false),
+      teclaAbajo(false),
       piscinaFinal(210.0f, 5850.0f, 380.0f, 105.0f),
       zonaViento(76.0f, 1060.0f, 648.0f, 640.0f),
       zonaVelocidad(96.0f, 3260.0f, 608.0f, 520.0f),
@@ -98,6 +104,7 @@ NivelRutaAnillos::NivelRutaAnillos()
       yRafaga(900.0f),
       tiempoEntradaDron(0.0f),
       tiempoCorreccionLateral(0.0f),
+      tiempoInvulnerable(0.0f),
       calidadEntrada(0),
       nivelSuperado(false),
       nivelPerdido(false),
@@ -109,6 +116,8 @@ NivelRutaAnillos::NivelRutaAnillos()
     dificultad.configurar(NORMAL);
     spriteAlarma.load(":/recursos/sprites/alarma.png");
     spriteViento.load(":/recursos/sprites/viento_turbulencia.png");
+    spriteVientoDerecha.load(":/recursos/sprites/velocidad_derecha.png");
+    spriteVientoIzquierda.load(":/recursos/sprites/velocidad_izquierda.png");
     spritePiscinaFinal.load(":/recursos/sprites/piscina_ciudad_academia.png");
     spriteColumnaTorre.load(":/recursos/sprites/torre_columna_luz.png");
     spriteFondo.load(":/recursos/sprites/fondo_vertical_torre.png");
@@ -137,7 +146,7 @@ NivelRutaAnillos::NivelRutaAnillos()
     jugador->colocarEn(82.0f, 128.0f);
     jugador->setEnAire(false);
     jugador->setVY(0.0f);
-    proyectilesDron.reserve(12);
+    proyectilesDron.reserve(MAX_PROYECTILES_DRON);
     crearEntidades();
     crearMonedas();
 }
@@ -147,8 +156,10 @@ NivelRutaAnillos::~NivelRutaAnillos() = default;
 void NivelRutaAnillos::crearEntidades()
 {
     anillos.clear();
+    obstaculos.clear();
 
     float factor = dificultad.getVelocidadPlataforma();
+    anillos.reserve(9);
     obstaculos.reserve(8);
     obstaculos.emplace_back(std::make_unique<Obstaculo>(130.0f, 720.0f, 54.0f, 54.0f, 52.0f * factor, 0.0f, BOYA));
     obstaculos.emplace_back(std::make_unique<Obstaculo>(575.0f, 1380.0f, 58.0f, 58.0f, -64.0f * factor, 0.0f, BARRIL));
@@ -196,6 +207,7 @@ void NivelRutaAnillos::actualizar(float dt)
     }
 
     tiempoNivel += dt;
+    tiempoInvulnerable = std::max(0.0f, tiempoInvulnerable - dt);
 
     if (entradaAguaActiva) {
         tiempoEntradaAgua += dt;
@@ -273,7 +285,12 @@ void NivelRutaAnillos::actualizar(float dt)
 
 void NivelRutaAnillos::actualizarMonedas(float dt)
 {
-    QPointF objetivo = jugador->centro();
+    const QPointF objetivo = jugador->centro();
+    const QRectF hitboxJugador = jugador->hitboxAjustada();
+    const TipoPersonaje tipoJugador = jugador->getTipo();
+    const float atraccionMonedas = jugador->getAtraccionMonedas();
+    const bool imanActivo = tiempoIman > 0.0f;
+
     for (const auto& moneda : monedas) {
         if (moneda->estaRecolectada()) {
             continue;
@@ -287,23 +304,23 @@ void NivelRutaAnillos::actualizarMonedas(float dt)
             return distancia2 <= radio * radio;
         };
 
-        if (tiempoIman > 0.0f) {
-            if (jugador->getTipo() == PERSONAJE_ACCELERATOR && dentroDelRadio(radioIman * 1.18f)) {
-                moneda->desplazarVectorialHacia(objetivo, jugador->getAtraccionMonedas() * 1.35f, radioIman * 1.18f, dt);
+        if (imanActivo) {
+            if (tipoJugador == PERSONAJE_ACCELERATOR && dentroDelRadio(radioIman * 1.18f)) {
+                moneda->desplazarVectorialHacia(objetivo, atraccionMonedas * 1.35f, radioIman * 1.18f, dt);
             }
-            else if (jugador->getTipo() == PERSONAJE_MUGINO) {
+            else if (tipoJugador == PERSONAJE_MUGINO) {
                 QPointF foco(objetivo.x(), objetivo.y());
-                moneda->canalizarMeltdowner(foco, jugador->getAtraccionMonedas() * 1.18f, radioIman * 0.62f, dt);
+                moneda->canalizarMeltdowner(foco, atraccionMonedas * 1.18f, radioIman * 0.62f, dt);
             }
-            else if (jugador->getTipo() == PERSONAJE_DARK_MATTER && dentroDelRadio(radioIman * 1.12f)) {
-                moneda->orbitarHacia(objetivo, jugador->getAtraccionMonedas() * 1.05f, radioIman * 1.12f, dt);
+            else if (tipoJugador == PERSONAJE_DARK_MATTER && dentroDelRadio(radioIman * 1.12f)) {
+                moneda->orbitarHacia(objetivo, atraccionMonedas * 1.05f, radioIman * 1.12f, dt);
             }
             else if (dentroDelRadio(radioIman)) {
-                moneda->atraerHacia(objetivo, jugador->getAtraccionMonedas(), radioIman, dt);
+                moneda->atraerHacia(objetivo, atraccionMonedas, radioIman, dt);
             }
         }
 
-        if (contraer(moneda->rect(), 7.0f, 7.0f).intersects(jugador->hitboxAjustada())) {
+        if (contraer(moneda->rect(), 7.0f, 7.0f).intersects(hitboxJugador)) {
             moneda->recolectar();
             monedasRecolectadas++;
             eventosSonido.push_back(SONIDO_ANILLO);
@@ -324,26 +341,27 @@ void NivelRutaAnillos::aplicarMovimientoJugador(float dt)
                     dificultad.getFactorGravedad() * jugador->getFactorGravedad();
     float controlHorizontal = 0.0f;
 
-    if (teclas.contains(Qt::Key_A) || teclas.contains(Qt::Key_Left)) {
-        controlHorizontal -= 420.0f;
+    if (teclaIzquierda) {
+        controlHorizontal -= 560.0f;
     }
-    if (teclas.contains(Qt::Key_D) || teclas.contains(Qt::Key_Right)) {
-        controlHorizontal += 420.0f;
+    if (teclaDerecha) {
+        controlHorizontal += 560.0f;
     }
-    if (teclas.contains(Qt::Key_E) || teclas.contains(Qt::Key_Up) || teclas.contains(Qt::Key_W)) {
+    if (teclaArriba) {
         velocidadVertical -= 150.0f * dt;
     }
-    if (teclas.contains(Qt::Key_S) || teclas.contains(Qt::Key_Down)) {
+    if (teclaAbajo) {
         velocidadVertical += 145.0f * dt;
     }
 
     velocidadHorizontal += controlHorizontal * jugador->getControlLateral() * dt;
-    velocidadHorizontal *= 0.955f * jugador->getFactorArrastre() / 0.995f;
+    velocidadHorizontal *= 0.970f * jugador->getFactorArrastre() / 0.995f;
     FisicaJuego::integrarVelocidad(velocidadVertical, gravedad, dt);
 
     if (zonaViento.intersects(jugador->rect())) {
-        float turbulencia = dificultad.getIntensidadViento() * (0.9f + 0.35f * std::sin(tiempoNivel * 3.4f));
-        velocidadHorizontal += turbulencia * dt;
+        float direccionVientoZona = std::sin(tiempoNivel * 0.45f) >= 0.0f ? 1.0f : -1.0f;
+        float turbulencia = dificultad.getIntensidadViento() * (1.15f + 0.42f * std::sin(tiempoNivel * 3.4f));
+        velocidadHorizontal += direccionVientoZona * turbulencia * dt;
     }
 
     tiempoProximaRafaga -= dt;
@@ -375,7 +393,7 @@ void NivelRutaAnillos::aplicarMovimientoJugador(float dt)
             velocidadHorizontal *= 0.92f;
         }
         else if (jugador->getTipo() == PERSONAJE_MUGINO) {
-            velocidadHorizontal += (teclas.contains(Qt::Key_A) || teclas.contains(Qt::Key_Left) ? -92.0f : 92.0f) * dt;
+            velocidadHorizontal += (teclaIzquierda ? -92.0f : 92.0f) * dt;
         }
         else if (jugador->getTipo() == PERSONAJE_DARK_MATTER) {
             velocidadVertical *= 0.988f;
@@ -384,7 +402,7 @@ void NivelRutaAnillos::aplicarMovimientoJugador(float dt)
     }
 
     velocidadVertical = std::clamp(velocidadVertical, -180.0f, 860.0f);
-    velocidadHorizontal = std::clamp(velocidadHorizontal, -360.0f, 360.0f);
+    velocidadHorizontal = std::clamp(velocidadHorizontal, -430.0f, 430.0f);
 
     float nuevoX = jugador->getX();
     float nuevoY = jugador->getY();
@@ -411,8 +429,11 @@ void NivelRutaAnillos::verificarInteracciones()
         }
     }
 
+    const QRectF hitboxJugador = jugador->hitboxAjustada();
+    const bool puedeRecibirImpacto = tiempoInvulnerable <= 0.0f;
+
     for (const auto& obstaculo : obstaculos) {
-        if (contraer(obstaculo->rect(), 11.0f, 11.0f).intersects(jugador->hitboxAjustada())) {
+        if (puedeRecibirImpacto && contraer(obstaculo->rect(), 11.0f, 11.0f).intersects(hitboxJugador)) {
             if (tiempoIman > 0.0f && jugador->getTipo() == PERSONAJE_ACCELERATOR) {
                 velocidadHorizontal += jugador->centro().x() < obstaculo->centro().x() ? -175.0f : 175.0f;
                 eventosSonido.push_back(SONIDO_ANILLO);
@@ -423,25 +444,27 @@ void NivelRutaAnillos::verificarInteracciones()
             velocidadHorizontal *= -0.45f;
             velocidadVertical = std::max(120.0f, velocidadVertical * 0.72f);
             dron->aprender(165.0f);
+            tiempoInvulnerable = 1.0f;
             jugador->colocarEn(std::clamp(jugador->getX() + 55.0f, 45.0f, 720.0f), jugador->getY() - 35.0f);
             eventosSonido.push_back(SONIDO_COLISION);
             return;
         }
     }
 
-    if (dronActivo && contraer(dron->rect(), 10.0f, 10.0f).intersects(jugador->hitboxAjustada())) {
+    if (puedeRecibirImpacto && dronActivo && contraer(dron->rect(), 10.0f, 10.0f).intersects(hitboxJugador)) {
         golpes++;
         tiempoRestante = std::max(0.0f, tiempoRestante - 3.0f);
         velocidadHorizontal += jugador->centro().x() < dron->centro().x() ? -160.0f : 160.0f;
+        tiempoInvulnerable = 1.0f;
         eventosSonido.push_back(SONIDO_COLISION);
     }
 
-    if (piscinaFinal.intersects(jugador->hitboxAjustada())) {
+    if (piscinaFinal.intersects(hitboxJugador)) {
         registrarEntradaAgua();
         return;
     }
 
-    QRectF hitbox = jugador->hitboxAjustada();
+    QRectF hitbox = hitboxJugador;
     bool pasoLaPiscina = hitbox.top() > piscinaFinal.bottom() + 24.0f;
     bool llegoAlFondo = hitbox.bottom() >= alturaMundo - 18.0f;
     if ((pasoLaPiscina || llegoAlFondo) && !entradaAguaActiva) {
@@ -464,6 +487,22 @@ void NivelRutaAnillos::crearProyectilDron()
     float rapidezBase = (elastico ? 350.0f : 330.0f) * dificultad.getFactorAgente();
     float rapidez = std::clamp(rapidezBase + rapidezJugador * (0.38f + factorCaida * 0.30f), 430.0f, 940.0f);
     QPointF velocidad = dron->calcularVectorDisparo(*jugador, rapidez);
+
+    for (const auto& proyectil : proyectilesDron) {
+        if (!proyectil->estaActivo()) {
+            proyectil->reiniciar(dron->centro().x() - 12.0f,
+                                 dron->centro().y() - 12.0f,
+                                 static_cast<float>(velocidad.x()),
+                                 static_cast<float>(velocidad.y()),
+                                 elastico);
+            return;
+        }
+    }
+
+    if (proyectilesDron.size() >= MAX_PROYECTILES_DRON) {
+        return;
+    }
+
     proyectilesDron.emplace_back(std::make_unique<ProyectilDron>(
         dron->centro().x() - 12.0f,
         dron->centro().y() - 12.0f,
@@ -475,30 +514,26 @@ void NivelRutaAnillos::crearProyectilDron()
 
 void NivelRutaAnillos::actualizarProyectilesDron(float dt)
 {
+    const QRectF hitboxJugador = jugador->hitboxAjustada();
+
     for (const auto& proyectil : proyectilesDron) {
         bool estabaActivo = proyectil->estaActivo();
         proyectil->actualizar(dt);
 
-        if (proyectil->estaActivo() && contraer(proyectil->rect(), 3.0f, 3.0f).intersects(jugador->hitboxAjustada())) {
+        if (tiempoInvulnerable <= 0.0f && proyectil->estaActivo() && contraer(proyectil->rect(), 3.0f, 3.0f).intersects(hitboxJugador)) {
             resolverColisionProyectil(*proyectil);
             proyectil->desactivar();
             golpes += proyectil->usaColisionElastica() ? 0 : 1;
             tiempoRestante = std::max(0.0f, tiempoRestante - (proyectil->usaColisionElastica() ? 0.8f : 1.8f));
             dron->aprender(170.0f);
             dron->registrarImpactoJugador();
+            tiempoInvulnerable = 1.0f;
             eventosSonido.push_back(SONIDO_COLISION);
         }
         else if (estabaActivo && !proyectil->estaActivo()) {
             dron->registrarEvasionJugador();
         }
     }
-
-    proyectilesDron.erase(
-        std::remove_if(proyectilesDron.begin(), proyectilesDron.end(),
-                       [](const std::unique_ptr<ProyectilDron>& proyectil) {
-                           return !proyectil->estaActivo();
-                       }),
-        proyectilesDron.end());
 }
 
 void NivelRutaAnillos::resolverColisionProyectil(ProyectilDron& proyectil)
@@ -546,15 +581,15 @@ void NivelRutaAnillos::registrarEntradaAgua()
 {
     calcularPuntaje();
     entradaAguaActiva = true;
-    resultadoEntradaSuperado = puntaje >= 55;
+    resultadoEntradaSuperado = puntaje >= dificultad.getPuntajeMinimo();
     tiempoEntradaAgua = 0.0f;
     xEntradaAgua = jugador->centro().x();
     velocidadEntradaAgua = std::abs(jugador->getVY());
 
-    if (puntaje >= 82) {
+    if (puntaje >= std::max(82, dificultad.getPuntajeMinimo() + 10)) {
         calidadEntrada = 2;
     }
-    else if (puntaje >= 55) {
+    else if (puntaje >= dificultad.getPuntajeMinimo()) {
         calidadEntrada = 1;
     }
     else {
@@ -568,7 +603,6 @@ void NivelRutaAnillos::registrarEntradaAgua()
 
     if (resultadoEntradaSuperado) {
         dron->registrarAciertoJugador();
-        eventosSonido.push_back(SONIDO_NIVEL);
     }
 }
 
@@ -576,17 +610,37 @@ void NivelRutaAnillos::calcularPuntaje()
 {
     float centroPiscina = piscinaFinal.x() + piscinaFinal.width() / 2.0f;
     float errorEntrada = std::abs(jugador->centro().x() - centroPiscina);
-    int precision = static_cast<int>(std::clamp(38.0f - errorEntrada * 0.22f, 0.0f, 38.0f));
-    int ruta = std::min(60, monedasRecolectadas * 5);
-    int bonusMonedas = monedasRecolectadas >= 8 ? 8 : 0;
-    int bonusRitmo = static_cast<int>(std::max(0.0f, tiempoRestante) * 0.28f);
-    int bonusVelocidad = velocidadVertical >= 120.0f && velocidadVertical <= 195.0f ? 12 : 2;
-    int penalizacionCorreccion = static_cast<int>(std::clamp(tiempoCorreccionLateral * 10.0f, 0.0f, 22.0f));
-    if (jugador->estaCorrigiendoLateral()) {
-        penalizacionCorreccion += 8;
+    const float factorPrecision = dificultad.getTipo() == FACIL ? 0.15f :
+                                  dificultad.getTipo() == NORMAL ? 0.19f :
+                                                                    0.24f;
+    int precision = static_cast<int>(std::clamp(40.0f - errorEntrada * factorPrecision, 0.0f, 40.0f));
+
+    const float recorridoTotal = std::max(1.0f, static_cast<float>(piscinaFinal.y()) - 128.0f);
+    float progreso = std::clamp((jugador->getY() - 128.0f) / recorridoTotal, 0.0f, 1.0f);
+    int ruta = static_cast<int>(progreso * 38.0f);
+    int bonusMonedas = std::min(26, monedasRecolectadas * 2) + (monedasRecolectadas >= 8 ? 5 : 0);
+    int bonusRitmo = static_cast<int>(std::max(0.0f, tiempoRestante) * 0.12f);
+    int bonusVelocidad = velocidadVertical >= 105.0f && velocidadVertical <= 285.0f ? 12 : 7;
+    const bool evaluarTecnicaEntrada = entradaAguaActiva ||
+                                       piscinaFinal.intersects(jugador->hitboxAjustada()) ||
+                                       jugador->getY() >= piscinaFinal.y() - 420.0f ||
+                                       nivelPerdido;
+    const float factorCorreccion = dificultad.getTipo() == FACIL ? 4.5f :
+                                   dificultad.getTipo() == NORMAL ? 6.0f :
+                                                                     7.5f;
+    int penalizacionCorreccion = evaluarTecnicaEntrada
+                                     ? static_cast<int>(std::clamp(tiempoCorreccionLateral * factorCorreccion, 0.0f, 14.0f))
+                                     : 0;
+    int penalizacionGolpes = golpes * (dificultad.getTipo() == FACIL ? 5 : dificultad.getTipo() == NORMAL ? 7 : 9);
+    int penalizacion = penalizacionGolpes + penalizacionCorreccion;
+    int calculado = ruta + bonusMonedas + precision + bonusRitmo + bonusVelocidad - penalizacion;
+
+    if (entradaAguaActiva || jugador->getY() >= piscinaFinal.y() - 220.0f) {
+        const int pisoFinal = dificultad.getTipo() == FACIL ? 42 : dificultad.getTipo() == NORMAL ? 34 : 24;
+        calculado = std::max(calculado, pisoFinal - penalizacionGolpes);
     }
-    int penalizacion = golpes * 10 + penalizacionCorreccion;
-    puntaje = std::clamp(ruta + bonusMonedas + precision + bonusRitmo + bonusVelocidad - penalizacion, 0, 100);
+
+    puntaje = std::clamp(calculado, 0, 100);
 }
 
 void NivelRutaAnillos::actualizarCamara()
@@ -755,18 +809,32 @@ void NivelRutaAnillos::dibujarIman(QPainter& painter)
 void NivelRutaAnillos::dibujarProyectilesDron(QPainter& painter)
 {
     for (const auto& proyectil : proyectilesDron) {
-        proyectil->dibujar(painter);
+        if (proyectil->estaActivo() && estaVisible(proyectil->rect())) {
+            proyectil->dibujar(painter);
+        }
     }
+}
+
+bool NivelRutaAnillos::estaVisible(const QRectF& rect) const
+{
+    QRectF vista(0.0f, camaraY - 140.0f, 800.0f, 880.0f);
+    return rect.intersects(vista);
 }
 
 void NivelRutaAnillos::dibujarEscenario(QPainter& painter)
 {
+    const QRectF visible(0.0f, camaraY, 800.0f, 600.0f);
+
     if (!spriteFondo.isNull()) {
-        painter.drawPixmap(QRect(0, 0, 800, static_cast<int>(alturaMundo)), spriteFondo);
-        painter.fillRect(QRectF(0, 0, 800, alturaMundo), QColor(6, 20, 36, 70));
+        float proporcionY = std::clamp(camaraY / std::max(1.0f, alturaMundo - 600.0f), 0.0f, 1.0f);
+        int fuenteY = static_cast<int>(proporcionY * std::max(0, spriteFondo.height() - 600));
+        painter.drawPixmap(QRect(0, static_cast<int>(camaraY), 800, 600),
+                           spriteFondo,
+                           QRect(0, fuenteY, spriteFondo.width(), std::min(600, spriteFondo.height() - fuenteY)));
+        painter.fillRect(visible, QColor(6, 20, 36, 70));
         if (!spriteTexturaPixel.isNull()) {
             painter.setOpacity(0.24);
-            painter.fillRect(QRectF(0, 0, 800, alturaMundo), QBrush(spriteTexturaPixel));
+            painter.fillRect(visible, QBrush(spriteTexturaPixel));
             painter.setOpacity(1.0);
         }
     }
@@ -778,87 +846,88 @@ void NivelRutaAnillos::dibujarEscenario(QPainter& painter)
         painter.fillRect(QRectF(0, camaraY, 800, 600), fondo);
     }
 
-    painter.setPen(QPen(QColor(130, 230, 255, 145), 2, Qt::DashLine));
-    painter.setBrush(QColor(80, 205, 255, 38));
-    painter.drawRoundedRect(zonaViento, 12, 12);
-    painter.setPen(QPen(QColor(150, 235, 255, 175), 3));
-    for (int i = 0; i < 9; ++i) {
-        float y = zonaViento.y() + 52.0f + i * 62.0f;
-        float offset = std::sin(tiempoNivel * 3.8f + i) * 42.0f;
-        painter.drawArc(QRectF(zonaViento.x() + 52.0f + offset, y, zonaViento.width() - 104.0f, 38.0f), 0, 180 * 16);
-        painter.drawLine(QPointF(zonaViento.x() + 92.0f + offset, y + 18.0f),
-                         QPointF(zonaViento.right() - 72.0f + offset * 0.2f, y + 18.0f));
-        painter.drawLine(QPointF(zonaViento.right() - 72.0f + offset * 0.2f, y + 18.0f),
-                         QPointF(zonaViento.right() - 96.0f + offset * 0.2f, y + 6.0f));
-        painter.drawLine(QPointF(zonaViento.right() - 72.0f + offset * 0.2f, y + 18.0f),
-                         QPointF(zonaViento.right() - 96.0f + offset * 0.2f, y + 31.0f));
-    }
-    if (!spriteViento.isNull()) {
-        painter.setOpacity(0.7);
-        for (int y = static_cast<int>(zonaViento.y()) + 76; y < zonaViento.bottom() - 70; y += 180) {
-            painter.drawPixmap(QRect(288 + static_cast<int>(std::sin(tiempoNivel * 2.6f + y) * 26.0f), y, 210, 82), spriteViento);
+    if (estaVisible(zonaViento)) {
+        painter.setPen(QPen(QColor(130, 230, 255, 145), 2, Qt::DashLine));
+        painter.setBrush(QColor(80, 205, 255, 38));
+        painter.drawRoundedRect(zonaViento, 12, 12);
+        float direccionZona = std::sin(tiempoNivel * 0.45f) >= 0.0f ? 1.0f : -1.0f;
+        const QPixmap& spriteZona = direccionZona > 0.0f ? spriteVientoDerecha : spriteVientoIzquierda;
+        if (!spriteZona.isNull()) {
+            painter.setOpacity(0.7);
+            for (int y = static_cast<int>(zonaViento.y()) + 76; y < zonaViento.bottom() - 70; y += 180) {
+                QRect destino(288 + static_cast<int>(std::sin(tiempoNivel * 2.6f + y) * 26.0f), y, 210, 82);
+                if (estaVisible(destino)) {
+                    painter.drawPixmap(destino, spriteZona);
+                }
+            }
+            painter.setOpacity(1.0);
         }
-        painter.setOpacity(1.0);
     }
 
     if (tiempoRafaga > 0.0f) {
         painter.save();
         painter.setOpacity(0.86);
-        painter.setPen(QPen(QColor(150, 238, 255, 220), 4));
         float baseY = yRafaga + std::sin(tiempoNivel * 12.0f) * 18.0f;
-        float inicioX = direccionRafaga > 0.0f ? 95.0f : 705.0f;
-        float finX = direccionRafaga > 0.0f ? 705.0f : 95.0f;
-        for (int i = 0; i < 5; ++i) {
-            float y = baseY + i * 27.0f;
-            painter.drawLine(QPointF(inicioX, y), QPointF(finX, y + std::sin(tiempoNivel * 7.0f + i) * 18.0f));
-            painter.drawLine(QPointF(finX, y), QPointF(finX - direccionRafaga * 28.0f, y - 12.0f));
-            painter.drawLine(QPointF(finX, y), QPointF(finX - direccionRafaga * 28.0f, y + 12.0f));
+        const QPixmap& spriteRafaga = direccionRafaga > 0.0f ? spriteVientoDerecha : spriteVientoIzquierda;
+        if (!spriteRafaga.isNull()) {
+            for (int i = 0; i < 3; ++i) {
+                QRect destino(direccionRafaga > 0.0f ? 184 + i * 118 : 392 - i * 118,
+                              static_cast<int>(baseY - 66.0f + i * 34.0f),
+                              220,
+                              88);
+                painter.drawPixmap(destino, spriteRafaga);
+            }
         }
-        if (!spriteViento.isNull()) {
-            QRect destino(direccionRafaga > 0.0f ? 306 : 284, static_cast<int>(baseY - 58.0f), 230, 92);
-            if (direccionRafaga > 0.0f) {
-                painter.drawPixmap(destino, spriteViento);
-            }
-            else {
-                painter.translate(destino.center());
-                painter.scale(-1.0, 1.0);
-                painter.drawPixmap(QRect(-destino.width() / 2, -destino.height() / 2, destino.width(), destino.height()), spriteViento);
-            }
+        else if (!spriteViento.isNull()) {
+            QRect destino(295, static_cast<int>(baseY - 58.0f), 230, 92);
+            painter.drawPixmap(destino, spriteViento);
         }
         painter.restore();
     }
 
-    painter.setPen(QPen(QColor(255, 230, 95, 150), 2, Qt::DashLine));
-    painter.setBrush(QColor(255, 230, 95, 36));
-    painter.drawRoundedRect(zonaVelocidad, 12, 12);
-
-    QRect plataformaInicio(34, 188, 150, 48);
-    if (!spritePlataformaInicio.isNull()) {
-        painter.drawPixmap(plataformaInicio, spritePlataformaInicio);
-    }
-    else {
-        painter.setPen(Qt::NoPen);
-        painter.setBrush(QColor(27, 126, 174));
-        painter.drawRect(QRectF(24, 166, 196, 20));
-        painter.setBrush(QColor(35, 58, 70));
-        painter.drawRect(QRectF(36, 186, 34, 72));
+    if (estaVisible(zonaVelocidad)) {
+        painter.setPen(QPen(QColor(255, 230, 95, 150), 2, Qt::DashLine));
+        painter.setBrush(QColor(255, 230, 95, 36));
+        painter.drawRoundedRect(zonaVelocidad, 12, 12);
     }
 
-    dibujarPiscinaFinal(painter);
+    QRect plataformaInicio(44, 160, 110, 105);
+    if (estaVisible(plataformaInicio)) {
+        if (!spritePlataformaInicio.isNull()) {
+            painter.drawPixmap(plataformaInicio, spritePlataformaInicio);
+        }
+        else {
+            painter.setPen(Qt::NoPen);
+            painter.setBrush(QColor(27, 126, 174));
+            painter.drawRect(QRectF(24, 166, 196, 20));
+            painter.setBrush(QColor(35, 58, 70));
+            painter.drawRect(QRectF(36, 186, 34, 72));
+        }
+    }
+
+    if (estaVisible(piscinaFinal.adjusted(-180.0, -130.0, 180.0, 240.0))) {
+        dibujarPiscinaFinal(painter);
+    }
 
     for (const auto& anillo : anillos) {
-        anillo->dibujar(painter);
+        if (!anillo->estaRecolectado() && estaVisible(anillo->rect())) {
+            anillo->dibujar(painter);
+        }
     }
 
     for (const auto& moneda : monedas) {
-        moneda->dibujar(painter);
+        if (!moneda->estaRecolectada() && estaVisible(moneda->rect())) {
+            moneda->dibujar(painter);
+        }
     }
 
     for (const auto& obstaculo : obstaculos) {
-        obstaculo->dibujar(painter);
+        if (estaVisible(obstaculo->rect())) {
+            obstaculo->dibujar(painter);
+        }
     }
 
-    if (!saltoInicialPendiente && tiempoEntradaDron >= 2.25f) {
+    if (!saltoInicialPendiente && tiempoEntradaDron >= 2.25f && estaVisible(dron->rect())) {
         dron->dibujar(painter);
     }
     dibujarProyectilesDron(painter);
@@ -967,13 +1036,19 @@ void NivelRutaAnillos::dibujar(QPainter& painter)
 
 void NivelRutaAnillos::teclaPresionada(int tecla)
 {
-    teclas.insert(tecla);
-
     if (tecla == Qt::Key_A || tecla == Qt::Key_Left) {
+        teclaIzquierda = true;
         jugador->moverIzquierda(true);
     }
     if (tecla == Qt::Key_D || tecla == Qt::Key_Right) {
+        teclaDerecha = true;
         jugador->moverDerecha(true);
+    }
+    if (tecla == Qt::Key_E || tecla == Qt::Key_Up || tecla == Qt::Key_W) {
+        teclaArriba = true;
+    }
+    if (tecla == Qt::Key_S || tecla == Qt::Key_Down) {
+        teclaAbajo = true;
     }
 
     if (tecla == Qt::Key_Space && saltoInicialPendiente && !jugador->estaEnAire()) {
@@ -1006,13 +1081,19 @@ void NivelRutaAnillos::teclaPresionada(int tecla)
 
 void NivelRutaAnillos::teclaLiberada(int tecla)
 {
-    teclas.remove(tecla);
-
     if (tecla == Qt::Key_A || tecla == Qt::Key_Left) {
+        teclaIzquierda = false;
         jugador->moverIzquierda(false);
     }
     if (tecla == Qt::Key_D || tecla == Qt::Key_Right) {
+        teclaDerecha = false;
         jugador->moverDerecha(false);
+    }
+    if (tecla == Qt::Key_E || tecla == Qt::Key_Up || tecla == Qt::Key_W) {
+        teclaArriba = false;
+    }
+    if (tecla == Qt::Key_S || tecla == Qt::Key_Down) {
+        teclaAbajo = false;
     }
 }
 
@@ -1047,7 +1128,10 @@ void NivelRutaAnillos::mousePresionado(const QPointF& posicion)
 
 void NivelRutaAnillos::reiniciarNivel()
 {
-    teclas.clear();
+    teclaIzquierda = false;
+    teclaDerecha = false;
+    teclaArriba = false;
+    teclaAbajo = false;
     anillosRecolectados = 0;
     monedasRecolectadas = 0;
     golpes = 0;
@@ -1068,6 +1152,7 @@ void NivelRutaAnillos::reiniciarNivel()
     yRafaga = 900.0f;
     tiempoEntradaDron = 0.0f;
     tiempoCorreccionLateral = 0.0f;
+    tiempoInvulnerable = 0.0f;
     dronActivo = false;
     piscinaFinal.moveLeft(210.0f);
     piscinaVelocidad = 0.0f;

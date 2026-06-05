@@ -22,7 +22,7 @@ void Dificultad::configurar(TipoDificultad nuevoTipo)
         factorPiscinaMovil = 0.72f;
         factorRafagas = 0.70f;
         factorAgente = 0.78f;
-        puntajeMinimo = 40;
+        puntajeMinimo = 35;
         intentosMaximos = 5;
         energiaInicial = 120.0f;
     }
@@ -34,7 +34,7 @@ void Dificultad::configurar(TipoDificultad nuevoTipo)
         factorPiscinaMovil = 1.0f;
         factorRafagas = 1.0f;
         factorAgente = 1.0f;
-        puntajeMinimo = 70;
+        puntajeMinimo = 50;
         intentosMaximos = 4;
         energiaInicial = 100.0f;
     }
@@ -46,7 +46,7 @@ void Dificultad::configurar(TipoDificultad nuevoTipo)
         factorPiscinaMovil = 1.30f;
         factorRafagas = 1.28f;
         factorAgente = 1.22f;
-        puntajeMinimo = 90;
+        puntajeMinimo = 65;
         intentosMaximos = 3;
         energiaInicial = 80.0f;
     }
