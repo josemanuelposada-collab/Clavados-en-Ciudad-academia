@@ -92,6 +92,7 @@ private:
     bool resultadoEntradaSuperado;
     bool saltoInicialPendiente;
     bool dronActivo;
+    QString motivoDerrotaActual;
 
 public:
     NivelRutaAnillos();
@@ -106,6 +107,7 @@ public:
     void configurarPersonaje(TipoPersonaje tipo) override;
     bool estaSuperado() const override;
     bool estaPerdido() const override;
+    QString motivoDerrota() const override;
     QString nombreNivel() const override;
     QVector<EventoSonidoJuego> consumirEventosSonido() override;
 

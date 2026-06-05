@@ -111,7 +111,8 @@ NivelRutaAnillos::NivelRutaAnillos()
       entradaAguaActiva(false),
       resultadoEntradaSuperado(false),
       saltoInicialPendiente(true),
-      dronActivo(false)
+      dronActivo(false),
+      motivoDerrotaActual("")
 {
     dificultad.configurar(NORMAL);
     spriteAlarma.load(":/recursos/sprites/alarma.png");
@@ -214,6 +215,11 @@ void NivelRutaAnillos::actualizar(float dt)
         if (tiempoEntradaAgua >= 2.45f) {
             nivelSuperado = resultadoEntradaSuperado;
             nivelPerdido = !resultadoEntradaSuperado;
+            if (nivelPerdido) {
+                motivoDerrotaActual = QString("Entrada insuficiente: %1 pts. Minimo requerido: %2.")
+                                          .arg(puntaje)
+                                          .arg(dificultad.getPuntajeMinimo());
+            }
         }
         return;
     }
@@ -279,6 +285,9 @@ void NivelRutaAnillos::actualizar(float dt)
     actualizarCamara();
 
     if (!entradaAguaActiva && (tiempoRestante <= 0.0f || golpes >= 4)) {
+        motivoDerrotaActual = tiempoRestante <= 0.0f
+                                   ? "Se acabo el tiempo antes de completar la ruta."
+                                   : "Recibiste demasiados impactos del dron u obstaculos.";
         nivelPerdido = true;
     }
 }
@@ -348,7 +357,7 @@ void NivelRutaAnillos::aplicarMovimientoJugador(float dt)
         controlHorizontal += 560.0f;
     }
     if (teclaArriba) {
-        velocidadVertical -= 150.0f * dt;
+        velocidadVertical = std::max(36.0f, velocidadVertical - 150.0f * dt);
     }
     if (teclaAbajo) {
         velocidadVertical += 145.0f * dt;
@@ -401,7 +410,10 @@ void NivelRutaAnillos::aplicarMovimientoJugador(float dt)
         }
     }
 
-    velocidadVertical = std::clamp(velocidadVertical, -180.0f, 860.0f);
+    if (tiempoEntradaDron > 0.85f && velocidadVertical < 24.0f) {
+        velocidadVertical = 24.0f;
+    }
+    velocidadVertical = std::clamp(velocidadVertical, -90.0f, 860.0f);
     velocidadHorizontal = std::clamp(velocidadHorizontal, -430.0f, 430.0f);
 
     float nuevoX = jugador->getX();
@@ -471,6 +483,9 @@ void NivelRutaAnillos::verificarInteracciones()
         calcularPuntaje();
         puntaje = std::max(0, puntaje - 30);
         golpes = 4;
+        motivoDerrotaActual = pasoLaPiscina
+                                  ? "Pasaste por fuera de la piscina final."
+                                  : "Llegaste al limite inferior sin entrada valida al agua.";
         nivelPerdido = true;
         jugador->detenerMovimiento();
         proyectilesDron.clear();
@@ -1068,15 +1083,6 @@ void NivelRutaAnillos::teclaPresionada(int tecla)
     else if (tecla == Qt::Key_R) {
         reiniciarNivel();
     }
-    else if (tecla == Qt::Key_1) {
-        cambiarDificultad(FACIL);
-    }
-    else if (tecla == Qt::Key_2) {
-        cambiarDificultad(NORMAL);
-    }
-    else if (tecla == Qt::Key_3) {
-        cambiarDificultad(DIFICIL);
-    }
 }
 
 void NivelRutaAnillos::teclaLiberada(int tecla)
@@ -1162,6 +1168,7 @@ void NivelRutaAnillos::reiniciarNivel()
     calidadEntrada = 0;
     nivelSuperado = false;
     nivelPerdido = false;
+    motivoDerrotaActual = "";
     entradaAguaActiva = false;
     resultadoEntradaSuperado = false;
     saltoInicialPendiente = true;
@@ -1192,7 +1199,7 @@ void NivelRutaAnillos::cambiarDificultad(TipoDificultad tipo)
         tiempoTotal = 56.0f;
     }
     else if (tipo == NORMAL) {
-        tiempoTotal = 48.0f;
+        tiempoTotal = 46.0f;
     }
     else {
         tiempoTotal = 42.0f;
@@ -1209,6 +1216,13 @@ bool NivelRutaAnillos::estaSuperado() const
 bool NivelRutaAnillos::estaPerdido() const
 {
     return nivelPerdido;
+}
+
+QString NivelRutaAnillos::motivoDerrota() const
+{
+    return motivoDerrotaActual.isEmpty()
+               ? "No completaste la ruta experimental."
+               : motivoDerrotaActual;
 }
 
 QString NivelRutaAnillos::nombreNivel() const

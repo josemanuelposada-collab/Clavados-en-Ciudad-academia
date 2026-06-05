@@ -112,7 +112,8 @@ void Personaje::cargarSecuencia(QVector<QPixmap>& destino, const QString& carpet
     destino.reserve(archivos.size());
 
     for (const QString& archivo : archivos) {
-        QPixmap sprite(carpeta + "/" + archivo);
+        const QString ruta = carpeta + "/" + archivo;
+        const QPixmap& sprite = SpriteCache::obtener(ruta);
         if (!sprite.isNull()) {
             destino.push_back(sprite);
         }
@@ -126,6 +127,9 @@ const QVector<QPixmap>& Personaje::secuenciaActual() const
     }
     if (enAire && derecha && !spritesDerecha.isEmpty()) {
         return spritesDerecha;
+    }
+    if (enAire && impulsoActivo && energia > 0.0f && !spritesImpulso.isEmpty()) {
+        return spritesImpulso;
     }
     if (enAire && vy < 0.0f && !spritesSalto.isEmpty()) {
         return spritesSalto;
@@ -183,7 +187,10 @@ void Personaje::dibujar(QPainter& painter)
     const QPixmap* spriteActual = nullptr;
 
     if (!secuencia.isEmpty()) {
-        spriteActual = &secuencia.first();
+        const int indice = secuencia.size() > 1
+                               ? static_cast<int>(tiempoAnimacion * 9.0f) % secuencia.size()
+                               : 0;
+        spriteActual = &secuencia[indice];
     }
 
     if (spriteActual != nullptr && !spriteActual->isNull()) {

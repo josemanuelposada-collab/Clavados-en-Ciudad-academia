@@ -31,6 +31,7 @@ public:
     virtual void reiniciarNivel() = 0;
     virtual bool estaSuperado() const = 0;
     virtual bool estaPerdido() const = 0;
+    virtual QString motivoDerrota() const { return QStringLiteral("El nivel termino en derrota."); }
     virtual QString nombreNivel() const = 0;
     virtual QVector<EventoSonidoJuego> consumirEventosSonido() = 0;
 };

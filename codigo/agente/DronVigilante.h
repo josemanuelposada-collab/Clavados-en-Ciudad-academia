@@ -16,8 +16,6 @@ enum EstadoDron
 
 struct PercepcionDron
 {
-    float distanciaJugador;
-    float velocidadJugador;
     float distanciaCuadrada;
     float rapidezCuadrada;
     float dxJugador;
