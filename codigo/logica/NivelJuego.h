@@ -20,7 +20,7 @@ enum EventoSonidoJuego
 class NivelJuego
 {
 public:
-    virtual ~NivelJuego() {}
+    virtual ~NivelJuego() = default;
 
     virtual void actualizar(float dt) = 0;
     virtual void dibujar(QPainter& painter) = 0;

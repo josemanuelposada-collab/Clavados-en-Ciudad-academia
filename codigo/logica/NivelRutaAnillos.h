@@ -9,7 +9,6 @@
 #include "../entidades/ProyectilDron.h"
 #include "../agente/DronVigilante.h"
 #include <QPixmap>
-#include <QSet>
 #include <memory>
 #include <vector>
 
@@ -23,10 +22,15 @@ private:
     std::vector<std::unique_ptr<Obstaculo>> obstaculos;
     std::vector<std::unique_ptr<ProyectilDron>> proyectilesDron;
 
-    QSet<int> teclas;
+    bool teclaIzquierda;
+    bool teclaDerecha;
+    bool teclaArriba;
+    bool teclaAbajo;
     QPixmap spriteFondo;
     QPixmap spriteAlarma;
     QPixmap spriteViento;
+    QPixmap spriteVientoDerecha;
+    QPixmap spriteVientoIzquierda;
     QPixmap spritePiscinaFinal;
     QPixmap spriteColumnaTorre;
     QPixmap spriteBanderines;
@@ -80,6 +84,7 @@ private:
     float yRafaga;
     float tiempoEntradaDron;
     float tiempoCorreccionLateral;
+    float tiempoInvulnerable;
     int calidadEntrada;
     bool nivelSuperado;
     bool nivelPerdido;
@@ -126,6 +131,7 @@ private:
     void dibujarEntradaAgua(QPainter& painter);
     void dibujarIman(QPainter& painter);
     void dibujarProyectilesDron(QPainter& painter);
+    bool estaVisible(const QRectF& rect) const;
 };
 
 #endif

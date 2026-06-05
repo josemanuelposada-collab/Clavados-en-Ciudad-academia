@@ -9,47 +9,30 @@
 
 #include "../entidades/Personaje.h"
 #include "../entidades/Plataforma.h"
-#include "../entidades/Moneda.h"
-#include "../entidades/ProyectilDron.h"
-#include "../agente/DronVigilante.h"
 #include "Dificultad.h"
 #include "NivelJuego.h"
-#include <vector>
 
 class NivelPiscinaEntrenamiento : public NivelJuego
 {
 private:
     std::unique_ptr<Personaje> jugador;
     std::unique_ptr<Plataforma> plataforma;
-    std::unique_ptr<DronVigilante> dron;
-    std::vector<std::unique_ptr<Moneda>> monedas;
-    std::vector<std::unique_ptr<ProyectilDron>> proyectilesDron;
 
     QRectF piscina;
+    QRectF zonaPerfecta;
     QRectF zonaViento;
-    QRectF zonaMeta;
     QRectF suelo;
 
-    QPixmap spritePiscina;
     QPixmap spritePiscinaBase;
-    QPixmap spriteViento;
-    QPixmap spriteAdvertencia;
-    QPixmap spriteTemporizador;
-    QPixmap spriteFondoCiudad;
-    QPixmap spriteGradas;
-    QPixmap spriteCarriles;
-    QPixmap spriteBanderines;
-    QPixmap spriteEdificio;
-    QPixmap spriteBrilloAgua;
     QPixmap spritePiscinaPremium;
-    QPixmap spriteAguaProfunda;
+    QPixmap spriteViento;
+    QPixmap spriteVientoDerecha;
+    QPixmap spriteVientoIzquierda;
+    QPixmap spriteFondoCiudad;
     QPixmap spriteChapuzonLimpio;
     QPixmap spriteChapuzonMedio;
     QPixmap spriteChapuzonFuerte;
     QPixmap spriteBurbujas;
-    QPixmap spriteTexturaTierra;
-    QPixmap spriteDecoracionIzq;
-    QPixmap spriteDecoracionDer;
     QPixmap spriteTexturaPixel;
     QPixmap spriteAlrededorPiscina;
     QPixmap spriteCorazonLleno;
@@ -59,32 +42,76 @@ private:
     Dificultad dificultad;
     QVector<EventoSonidoJuego> eventosSonido;
 
-    int puntaje;
+    int intentoActual;
+    int intentosMaximos;
+    int puntajeTotal;
+    int puntajeObjetivo;
+    int puntajeUltimoIntento;
     int mejorPuntaje;
-    int intentosRestantes;
-    int monedasRecolectadas;
+    int puntaje;
 
-    bool intentoTerminado;
-    bool intentoGanado;
+    bool intentoEnCurso;
+    bool esperandoSiguienteIntento;
+    bool intentoEvaluado;
     bool nivelSuperado;
     bool nivelPerdido;
     bool jugadorEnZonaViento;
     bool frenandoCaida;
     bool acelerandoCaida;
+    bool corrigiendoIzquierda;
+    bool corrigiendoDerecha;
+    bool usoImpulsoIntento;
 
-    float vientoLateral;
-    float gravedad;
-    float errorEntrada;
     float tiempoNivel;
-    float alturaMundo;
-    float camaraY;
+    float tiempoIntento;
+    float tiempoEsperaReinicio;
+    float tiempoEsperaActual;
     float tiempoIman;
     float cooldownIman;
     float radioIman;
-    float piscinaVelocidad;
-    float piscinaAceleracion;
-    float tiempoReinicioIntento;
+
+    float gravedad;
+    float vientoLateral;
+    float vientoRafaga;
+    float errorEntrada;
+    float velocidadEntrada;
+    float anguloPostura;
     float tiempoCorreccionLateral;
+
+    float potenciaActual;
+    float potenciaMinima;
+    float potenciaMaxima;
+    float velocidadCambioPotencia;
+    int direccionPotencia;
+
+    float xBasePlataforma;
+    float amplitudPlataforma;
+    float frecuenciaPlataforma;
+    float velocidadPlataforma;
+    float anchoZonaPerfecta;
+
+    void configurarIntento();
+    void iniciarIntento();
+    void finalizarIntento(int puntajeIntento, bool entroAlAgua);
+    void actualizarPotencia(float dt);
+    void actualizarPostura(float dt);
+    void actualizarZonaPerfecta();
+    void actualizarCamara();
+    void activarIman();
+
+    void verificarPiscina();
+    void verificarSuelo();
+    void verificarZonaViento();
+    void calcularPuntajePorEntrada();
+
+    void dibujarEscenario(QPainter& painter);
+    void dibujarHud(QPainter& painter);
+    void dibujarRafagasViento(QPainter& painter);
+    void dibujarTrayectoriaGuia(QPainter& painter);
+    void dibujarPotencia(QPainter& painter, const QRectF& rect);
+    void dibujarGaugePostura(QPainter& painter, const QRectF& rect);
+    void dibujarIman(QPainter& painter);
+    void dibujarResultado(QPainter& painter);
 
 public:
     NivelPiscinaEntrenamiento();
@@ -97,30 +124,8 @@ public:
     void teclaLiberada(int tecla) override;
     void mousePresionado(const QPointF& posicion) override;
 
-    void verificarColisiones();
-    void verificarPiscina();
-    void verificarSuelo();
-    void verificarZonaViento();
-
-    void calcularPuntajePorEntrada();
-    void crearMonedas();
-    void actualizarMonedas(float dt);
-    void actualizarProyectilesDron(float dt);
-    void crearProyectilDron();
-    void resolverColisionProyectil(ProyectilDron& proyectil);
-    void actualizarPiscina(float dt);
-    void activarIman();
-    void actualizarCamara();
-    void dibujarEscenario(QPainter& painter);
-    void dibujarHud(QPainter& painter);
-    void dibujarRafagasViento(QPainter& painter);
-    void dibujarIman(QPainter& painter);
-    void dibujarProyectilesDron(QPainter& painter);
-
-    void reiniciarIntento();
     void reiniciarNivel() override;
     void configurarPersonaje(TipoPersonaje tipo) override;
-
     void cambiarDificultad(TipoDificultad tipo);
     void aplicarParametrosDificultad();
 

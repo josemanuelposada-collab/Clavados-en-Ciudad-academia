@@ -34,7 +34,9 @@ GameWidget::GameWidget(QWidget* parent)
       sonidoMenu(nullptr),
       sonidoGameOver(nullptr),
       tiempoIntro(0.0f),
-      tiempoGameOver(0.0f)
+      tiempoGameOver(0.0f),
+      tiempoVictoria(0.0f),
+      victoriaProcesada(false)
 {
     setFocusPolicy(Qt::StrongFocus);
     setMouseTracking(true);
@@ -119,11 +121,6 @@ void GameWidget::avanzarNivel()
 void GameWidget::aplicarDificultadSeleccionada()
 {
     for (const auto& nivelJuego : niveles) {
-        NivelPiscinaEntrenamiento* piscina = dynamic_cast<NivelPiscinaEntrenamiento*>(nivelJuego.get());
-        if (piscina != nullptr) {
-            piscina->cambiarDificultad(dificultadSeleccionada);
-        }
-
         NivelRutaAnillos* ruta = dynamic_cast<NivelRutaAnillos*>(nivelJuego.get());
         if (ruta != nullptr) {
             ruta->cambiarDificultad(dificultadSeleccionada);
@@ -145,6 +142,8 @@ void GameWidget::iniciarPartida()
     nivelActual = 0;
     estadoPantalla = PANTALLA_JUGANDO;
     mostrarAyuda = false;
+    tiempoVictoria = 0.0f;
+    victoriaProcesada = false;
     if (sonidoMenu != nullptr) {
         sonidoMenu->stop();
     }
@@ -162,6 +161,8 @@ void GameWidget::reiniciarCampania()
 
     nivelActual = 0;
     estadoPantalla = PANTALLA_INICIO;
+    tiempoVictoria = 0.0f;
+    victoriaProcesada = false;
     if (sonidoMenu != nullptr && !sonidoMenu->isPlaying()) {
         sonidoMenu->play();
     }
@@ -556,7 +557,7 @@ void GameWidget::dibujarMarcoJuego(QPainter& painter)
         painter.drawText(1010, 512, "Objetivo:");
         painter.drawText(1010, 538, "Superar ambos niveles.");
         painter.drawText(1010, 566, "1/2/3 dificultad.");
-        painter.drawText(1010, 594, "Esc pausa. Tab demo.");
+        painter.drawText(1010, 594, "Esc pausa. Enter avanza.");
     }
 }
 
@@ -599,6 +600,19 @@ void GameWidget::actualizar()
 
         nivel()->actualizar(0.016f);
         procesarSonidosNivel();
+        if (campaniaCompletada()) {
+            if (!victoriaProcesada) {
+                reproducirEventoSonido(SONIDO_NIVEL);
+                victoriaProcesada = true;
+                tiempoVictoria = 0.0f;
+            }
+            tiempoVictoria += 0.016f;
+            if (tiempoVictoria >= 4.0f) {
+                reiniciarCampania();
+            }
+            update();
+            return;
+        }
         if (nivel()->estaPerdido()) {
             activarGameOver();
         }
@@ -696,6 +710,8 @@ void GameWidget::keyPressEvent(QKeyEvent* event)
     if (event->key() == Qt::Key_1 || event->key() == Qt::Key_2 || event->key() == Qt::Key_3) {
         dificultadSeleccionada = event->key() == Qt::Key_1 ? FACIL : event->key() == Qt::Key_2 ? NORMAL : DIFICIL;
         aplicarDificultadSeleccionada();
+        update();
+        return;
     }
 
     if (event->key() == Qt::Key_4 || event->key() == Qt::Key_5 ||
@@ -737,13 +753,6 @@ void GameWidget::keyPressEvent(QKeyEvent* event)
 
     if (event->key() == Qt::Key_M) {
         reiniciarCampania();
-        return;
-    }
-
-    if (event->key() == Qt::Key_Tab) {
-        nivelActual = (nivelActual + 1) % niveles.size();
-        niveles[nivelActual]->reiniciarNivel();
-        reproducirEventoSonido(SONIDO_NIVEL);
         return;
     }
 

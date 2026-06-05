@@ -42,6 +42,8 @@ private:
     QSoundEffect* sonidoGameOver;
     float tiempoIntro;
     float tiempoGameOver;
+    float tiempoVictoria;
+    bool victoriaProcesada;
 
     NivelJuego* nivel();
     void cargarNiveles();
