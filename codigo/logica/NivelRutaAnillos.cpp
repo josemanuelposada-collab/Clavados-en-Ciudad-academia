@@ -34,6 +34,36 @@ QRectF contraer(const QRectF& rect, float x, float y)
 {
     return rect.adjusted(x, y, -x, -y);
 }
+
+void exigirSprite(const QPixmap& sprite, const QString& nombre)
+{
+    if (sprite.isNull()) {
+        throw JuegoException("No se pudo cargar el recurso grafico obligatorio: " + nombre);
+    }
+}
+
+void dibujarPisoAlrededorPiscina(QPainter& painter,
+                                 const QPixmap& textura,
+                                 const QRectF& exterior,
+                                 const QRectF& huecoPiscina)
+{
+    if (textura.isNull()) {
+        return;
+    }
+
+    painter.save();
+    painter.setOpacity(0.78);
+    QBrush mosaico(textura);
+    painter.fillRect(QRectF(exterior.left(), exterior.top(), exterior.width(), huecoPiscina.top() - exterior.top()), mosaico);
+    painter.fillRect(QRectF(exterior.left(), huecoPiscina.bottom(), exterior.width(), exterior.bottom() - huecoPiscina.bottom()), mosaico);
+    painter.fillRect(QRectF(exterior.left(), huecoPiscina.top(), huecoPiscina.left() - exterior.left(), huecoPiscina.height()), mosaico);
+    painter.fillRect(QRectF(huecoPiscina.right(), huecoPiscina.top(), exterior.right() - huecoPiscina.right(), huecoPiscina.height()), mosaico);
+    painter.setOpacity(1.0);
+    painter.setPen(QPen(QColor(255, 255, 255, 95), 2));
+    painter.setBrush(Qt::NoBrush);
+    painter.drawRect(exterior.adjusted(1.0, 1.0, -1.0, -1.0));
+    painter.restore();
+}
 }
 
 NivelRutaAnillos::NivelRutaAnillos()
@@ -67,6 +97,7 @@ NivelRutaAnillos::NivelRutaAnillos()
       direccionRafaga(1.0f),
       yRafaga(900.0f),
       tiempoEntradaDron(0.0f),
+      tiempoCorreccionLateral(0.0f),
       calidadEntrada(0),
       nivelSuperado(false),
       nivelPerdido(false),
@@ -97,6 +128,12 @@ NivelRutaAnillos::NivelRutaAnillos()
     spriteAdvertenciaHud.load(":/recursos/sprites/hud_advertencia.png");
     spriteCorazonLleno.load(":/recursos/sprites/hud_corazon_lleno.png");
     spriteCorazonVacio.load(":/recursos/sprites/hud_corazon_vacio.png");
+    spritePlataformaInicio.load(":/recursos/sprites/plataforma_media.png");
+    spriteAlrededorPiscina.load(":/recursos/sprites/alrededor_piscina.jpg");
+    exigirSprite(spriteFondo, "fondo_vertical_torre.png");
+    exigirSprite(spritePiscinaPremium, "piscina_final_premium.png");
+    exigirSprite(spriteCorazonLleno, "hud_corazon_lleno.png");
+    exigirSprite(spriteCorazonVacio, "hud_corazon_vacio.png");
     jugador->colocarEn(82.0f, 128.0f);
     jugador->setEnAire(false);
     jugador->setVY(0.0f);
@@ -184,6 +221,10 @@ void NivelRutaAnillos::actualizar(float dt)
 
     actualizarPiscina(dt);
     aplicarMovimientoJugador(dt);
+    if (jugador->estaEnAire() && jugador->estaCorrigiendoLateral()) {
+        float cercaniaEntrada = std::clamp(static_cast<float>((jugador->getY() - (piscinaFinal.y() - 980.0f)) / 980.0f), 0.12f, 1.0f);
+        tiempoCorreccionLateral += dt * cercaniaEntrada;
+    }
     actualizarMonedas(dt);
 
     for (const auto& anillo : anillos) {
@@ -279,7 +320,8 @@ void NivelRutaAnillos::aplicarMovimientoJugador(float dt)
         return;
     }
 
-    float gravedad = (dificultad.getTipo() == FACIL ? 30.0f : dificultad.getTipo() == NORMAL ? 38.0f : 48.0f) * jugador->getFactorGravedad();
+    float gravedad = (dificultad.getTipo() == FACIL ? 30.0f : dificultad.getTipo() == NORMAL ? 38.0f : 48.0f) *
+                    dificultad.getFactorGravedad() * jugador->getFactorGravedad();
     float controlHorizontal = 0.0f;
 
     if (teclas.contains(Qt::Key_A) || teclas.contains(Qt::Key_Left)) {
@@ -310,8 +352,7 @@ void NivelRutaAnillos::aplicarMovimientoJugador(float dt)
             return minimo + static_cast<float>(QRandomGenerator::global()->generateDouble()) * (maximo - minimo);
         };
         direccionRafaga = QRandomGenerator::global()->bounded(2) == 0 ? -1.0f : 1.0f;
-        intensidadRafaga = aleatorio(260.0f, 520.0f) *
-                           (dificultad.getTipo() == FACIL ? 0.82f : dificultad.getTipo() == NORMAL ? 1.0f : 1.22f);
+        intensidadRafaga = aleatorio(260.0f, 520.0f) * dificultad.getFactorRafagas();
         tiempoRafaga = aleatorio(0.85f, 1.55f);
         tiempoProximaRafaga = aleatorio(2.25f, 4.15f);
         yRafaga = std::clamp(jugador->getY() + aleatorio(-180.0f, 260.0f), 360.0f, alturaMundo - 520.0f);
@@ -397,6 +438,21 @@ void NivelRutaAnillos::verificarInteracciones()
 
     if (piscinaFinal.intersects(jugador->hitboxAjustada())) {
         registrarEntradaAgua();
+        return;
+    }
+
+    QRectF hitbox = jugador->hitboxAjustada();
+    bool pasoLaPiscina = hitbox.top() > piscinaFinal.bottom() + 24.0f;
+    bool llegoAlFondo = hitbox.bottom() >= alturaMundo - 18.0f;
+    if ((pasoLaPiscina || llegoAlFondo) && !entradaAguaActiva) {
+        calcularPuntaje();
+        puntaje = std::max(0, puntaje - 30);
+        golpes = 4;
+        nivelPerdido = true;
+        jugador->detenerMovimiento();
+        proyectilesDron.clear();
+        dron->aprender(180.0f);
+        eventosSonido.push_back(SONIDO_COLISION);
     }
 }
 
@@ -405,7 +461,8 @@ void NivelRutaAnillos::crearProyectilDron()
     bool elastico = dron->getEstado() != INTERCEPTA;
     float rapidezJugador = std::sqrt(FisicaJuego::rapidezCuadrada(jugador->getVX(), jugador->getVY()));
     float factorCaida = std::clamp(jugador->getY() / (alturaMundo - 650.0f), 0.0f, 1.0f);
-    float rapidez = std::clamp((elastico ? 350.0f : 330.0f) + rapidezJugador * (0.38f + factorCaida * 0.30f), 430.0f, 940.0f);
+    float rapidezBase = (elastico ? 350.0f : 330.0f) * dificultad.getFactorAgente();
+    float rapidez = std::clamp(rapidezBase + rapidezJugador * (0.38f + factorCaida * 0.30f), 430.0f, 940.0f);
     QPointF velocidad = dron->calcularVectorDisparo(*jugador, rapidez);
     proyectilesDron.emplace_back(std::make_unique<ProyectilDron>(
         dron->centro().x() - 12.0f,
@@ -419,6 +476,7 @@ void NivelRutaAnillos::crearProyectilDron()
 void NivelRutaAnillos::actualizarProyectilesDron(float dt)
 {
     for (const auto& proyectil : proyectilesDron) {
+        bool estabaActivo = proyectil->estaActivo();
         proyectil->actualizar(dt);
 
         if (proyectil->estaActivo() && contraer(proyectil->rect(), 3.0f, 3.0f).intersects(jugador->hitboxAjustada())) {
@@ -427,7 +485,11 @@ void NivelRutaAnillos::actualizarProyectilesDron(float dt)
             golpes += proyectil->usaColisionElastica() ? 0 : 1;
             tiempoRestante = std::max(0.0f, tiempoRestante - (proyectil->usaColisionElastica() ? 0.8f : 1.8f));
             dron->aprender(170.0f);
+            dron->registrarImpactoJugador();
             eventosSonido.push_back(SONIDO_COLISION);
+        }
+        else if (estabaActivo && !proyectil->estaActivo()) {
+            dron->registrarEvasionJugador();
         }
     }
 
@@ -462,7 +524,7 @@ void NivelRutaAnillos::resolverColisionProyectil(ProyectilDron& proyectil)
 
 void NivelRutaAnillos::actualizarPiscina(float dt)
 {
-    float factor = dificultad.getTipo() == FACIL ? 0.75f : dificultad.getTipo() == NORMAL ? 1.0f : 1.22f;
+    float factor = dificultad.getFactorPiscinaMovil();
     piscinaAceleracion = std::sin(tiempoNivel * 0.72f + 1.4f) * 28.0f * factor;
     piscinaVelocidad += piscinaAceleracion * dt;
     piscinaVelocidad *= 0.993f;
@@ -519,7 +581,11 @@ void NivelRutaAnillos::calcularPuntaje()
     int bonusMonedas = monedasRecolectadas >= 8 ? 8 : 0;
     int bonusRitmo = static_cast<int>(std::max(0.0f, tiempoRestante) * 0.28f);
     int bonusVelocidad = velocidadVertical >= 120.0f && velocidadVertical <= 195.0f ? 12 : 2;
-    int penalizacion = golpes * 10;
+    int penalizacionCorreccion = static_cast<int>(std::clamp(tiempoCorreccionLateral * 10.0f, 0.0f, 22.0f));
+    if (jugador->estaCorrigiendoLateral()) {
+        penalizacionCorreccion += 8;
+    }
+    int penalizacion = golpes * 10 + penalizacionCorreccion;
     puntaje = std::clamp(ruta + bonusMonedas + precision + bonusRitmo + bonusVelocidad - penalizacion, 0, 100);
 }
 
@@ -534,7 +600,12 @@ void NivelRutaAnillos::dibujarPiscinaFinal(QPainter& painter)
         painter.drawPixmap(QRect(static_cast<int>(piscinaFinal.x() - 14.0f), static_cast<int>(piscinaFinal.y() + 12.0f), 408, 185), spriteAguaProfunda);
     }
 
-    if (!spriteTexturaTierra.isNull()) {
+    QRectF exteriorPiscina(piscinaFinal.x() - 165.0f, piscinaFinal.y() - 112.0f,
+                           piscinaFinal.width() + 330.0f, 310.0f);
+    QRectF huecoPiscina(piscinaFinal.x() - 28.0f, piscinaFinal.y() - 18.0f,
+                        piscinaFinal.width() + 56.0f, 162.0f);
+    dibujarPisoAlrededorPiscina(painter, spriteAlrededorPiscina, exteriorPiscina, huecoPiscina);
+    if (spriteAlrededorPiscina.isNull() && !spriteTexturaTierra.isNull()) {
         painter.fillRect(QRectF(piscinaFinal.x() - 96.0f, piscinaFinal.y() - 18.0f,
                                 piscinaFinal.width() + 192.0f, 190.0f),
                          QBrush(spriteTexturaTierra));
@@ -761,6 +832,18 @@ void NivelRutaAnillos::dibujarEscenario(QPainter& painter)
     painter.setBrush(QColor(255, 230, 95, 36));
     painter.drawRoundedRect(zonaVelocidad, 12, 12);
 
+    QRect plataformaInicio(34, 188, 150, 48);
+    if (!spritePlataformaInicio.isNull()) {
+        painter.drawPixmap(plataformaInicio, spritePlataformaInicio);
+    }
+    else {
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(QColor(27, 126, 174));
+        painter.drawRect(QRectF(24, 166, 196, 20));
+        painter.setBrush(QColor(35, 58, 70));
+        painter.drawRect(QRectF(36, 186, 34, 72));
+    }
+
     dibujarPiscinaFinal(painter);
 
     for (const auto& anillo : anillos) {
@@ -984,6 +1067,7 @@ void NivelRutaAnillos::reiniciarNivel()
     direccionRafaga = 1.0f;
     yRafaga = 900.0f;
     tiempoEntradaDron = 0.0f;
+    tiempoCorreccionLateral = 0.0f;
     dronActivo = false;
     piscinaFinal.moveLeft(210.0f);
     piscinaVelocidad = 0.0f;

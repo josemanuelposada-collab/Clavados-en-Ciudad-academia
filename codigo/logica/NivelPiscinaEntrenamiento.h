@@ -51,6 +51,7 @@ private:
     QPixmap spriteDecoracionIzq;
     QPixmap spriteDecoracionDer;
     QPixmap spriteTexturaPixel;
+    QPixmap spriteAlrededorPiscina;
     QPixmap spriteCorazonLleno;
     QPixmap spriteCorazonVacio;
     QPixmap spriteAdvertenciaHud;
@@ -68,6 +69,8 @@ private:
     bool nivelSuperado;
     bool nivelPerdido;
     bool jugadorEnZonaViento;
+    bool frenandoCaida;
+    bool acelerandoCaida;
 
     float vientoLateral;
     float gravedad;
@@ -80,6 +83,8 @@ private:
     float radioIman;
     float piscinaVelocidad;
     float piscinaAceleracion;
+    float tiempoReinicioIntento;
+    float tiempoCorreccionLateral;
 
 public:
     NivelPiscinaEntrenamiento();
