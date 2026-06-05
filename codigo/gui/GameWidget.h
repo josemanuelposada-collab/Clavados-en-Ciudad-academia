@@ -44,6 +44,9 @@ private:
     float tiempoGameOver;
     float tiempoVictoria;
     bool victoriaProcesada;
+    QString motivoGameOver;
+    QString ultimoError;
+    bool hayError;
 
     NivelJuego* nivel();
     void cargarNiveles();
@@ -62,6 +65,7 @@ private:
     void dibujarInicio(QPainter& painter);
     void dibujarPausa(QPainter& painter);
     void dibujarGameOver(QPainter& painter);
+    void dibujarError(QPainter& painter);
     void dibujarMarcoJuego(QPainter& painter);
     void dibujarCampaniaCompletada(QPainter& painter);
     bool campaniaCompletada();

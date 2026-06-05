@@ -27,14 +27,14 @@ void Dificultad::configurar(TipoDificultad nuevoTipo)
         energiaInicial = 120.0f;
     }
     else if (tipo == NORMAL) {
-        intensidadViento = 45.0f;
+        intensidadViento = 52.0f;
         velocidadPlataforma = 2.0f;
         amplitudPlataforma = 45.0f;
         factorGravedad = 1.0f;
-        factorPiscinaMovil = 1.0f;
-        factorRafagas = 1.0f;
-        factorAgente = 1.0f;
-        puntajeMinimo = 50;
+        factorPiscinaMovil = 1.08f;
+        factorRafagas = 1.08f;
+        factorAgente = 1.08f;
+        puntajeMinimo = 56;
         intentosMaximos = 4;
         energiaInicial = 100.0f;
     }

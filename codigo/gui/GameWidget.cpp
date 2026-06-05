@@ -1,6 +1,7 @@
 #include "GameWidget.h"
 #include <QPainter>
 #include <QApplication>
+#include <QDebug>
 #include <QLinearGradient>
 #include <QRadialGradient>
 #include <QUrl>
@@ -36,7 +37,10 @@ GameWidget::GameWidget(QWidget* parent)
       tiempoIntro(0.0f),
       tiempoGameOver(0.0f),
       tiempoVictoria(0.0f),
-      victoriaProcesada(false)
+      victoriaProcesada(false),
+      motivoGameOver(""),
+      ultimoError(""),
+      hayError(false)
 {
     setFocusPolicy(Qt::StrongFocus);
     setMouseTracking(true);
@@ -74,6 +78,8 @@ void GameWidget::cargarNiveles()
 
 void GameWidget::cargarSonidos()
 {
+    // QSoundEffect hereda de QObject; al usar `this` como padre,
+    // Qt libera estos objetos automaticamente junto con GameWidget.
     sonidoFondo = new QSoundEffect(this);
     sonidoFondo->setSource(QUrl("qrc:/recursos/audio/fondo_entrenamiento.wav"));
     sonidoFondo->setLoopCount(QSoundEffect::Infinite);
@@ -121,6 +127,11 @@ void GameWidget::avanzarNivel()
 void GameWidget::aplicarDificultadSeleccionada()
 {
     for (const auto& nivelJuego : niveles) {
+        NivelPiscinaEntrenamiento* piscina = dynamic_cast<NivelPiscinaEntrenamiento*>(nivelJuego.get());
+        if (piscina != nullptr) {
+            piscina->cambiarDificultad(dificultadSeleccionada);
+        }
+
         NivelRutaAnillos* ruta = dynamic_cast<NivelRutaAnillos*>(nivelJuego.get());
         if (ruta != nullptr) {
             ruta->cambiarDificultad(dificultadSeleccionada);
@@ -144,6 +155,9 @@ void GameWidget::iniciarPartida()
     mostrarAyuda = false;
     tiempoVictoria = 0.0f;
     victoriaProcesada = false;
+    motivoGameOver = "";
+    ultimoError = "";
+    hayError = false;
     if (sonidoMenu != nullptr) {
         sonidoMenu->stop();
     }
@@ -163,6 +177,9 @@ void GameWidget::reiniciarCampania()
     estadoPantalla = PANTALLA_INICIO;
     tiempoVictoria = 0.0f;
     victoriaProcesada = false;
+    motivoGameOver = "";
+    ultimoError = "";
+    hayError = false;
     if (sonidoMenu != nullptr && !sonidoMenu->isPlaying()) {
         sonidoMenu->play();
     }
@@ -175,6 +192,10 @@ void GameWidget::activarGameOver()
 {
     estadoPantalla = PANTALLA_GAME_OVER;
     tiempoGameOver = 0.0f;
+    motivoGameOver = nivel()->motivoDerrota();
+    if (motivoGameOver.trimmed().isEmpty()) {
+        motivoGameOver = "No se cumplio el objetivo del nivel.";
+    }
 
     if (sonidoFondo != nullptr) {
         sonidoFondo->stop();
@@ -473,8 +494,8 @@ void GameWidget::dibujarGameOver(QPainter& painter)
     fuente.setBold(false);
     painter.setFont(fuente);
     painter.setPen(QColor(214, 238, 246));
-    painter.drawText(QRectF(410, 342, 460, 32), Qt::AlignCenter, "Se acabaron los intentos de la campana.");
-    painter.drawText(QRectF(410, 386, 460, 32), Qt::AlignCenter, "Regresando al menu...");
+    painter.drawText(QRectF(410, 332, 460, 54), Qt::AlignCenter | Qt::TextWordWrap, motivoGameOver);
+    painter.drawText(QRectF(410, 396, 460, 28), Qt::AlignCenter, "Regresando al menu...");
 
     float progreso = std::clamp(tiempoGameOver / 3.0f, 0.0f, 1.0f);
     painter.setPen(Qt::NoPen);
@@ -482,6 +503,31 @@ void GameWidget::dibujarGameOver(QPainter& painter)
     painter.drawRect(QRectF(470, 438, 340, 10));
     painter.setBrush(QColor(255, 225, 95));
     painter.drawRect(QRectF(470, 438, 340 * progreso, 10));
+}
+
+void GameWidget::dibujarError(QPainter& painter)
+{
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(QColor(0, 0, 0, 175));
+    painter.drawRect(QRectF(0, 0, ANCHO_BASE, ALTO_BASE));
+
+    painter.setBrush(QColor(36, 12, 18, 242));
+    painter.drawRoundedRect(QRectF(310, 230, 660, 210), 10, 10);
+    painter.setBrush(QColor(255, 80, 80));
+    painter.drawRect(QRectF(310, 230, 8, 210));
+
+    QFont fuente = painter.font();
+    fuente.setPointSize(18);
+    fuente.setBold(true);
+    painter.setFont(fuente);
+    painter.setPen(QColor(255, 238, 238));
+    painter.drawText(QRectF(340, 262, 600, 38), Qt::AlignLeft | Qt::AlignVCenter, "Error de ejecucion");
+
+    fuente.setPointSize(11);
+    fuente.setBold(false);
+    painter.setFont(fuente);
+    painter.setPen(QColor(245, 220, 220));
+    painter.drawText(QRectF(340, 318, 590, 76), Qt::AlignLeft | Qt::TextWordWrap, ultimoError);
 }
 
 void GameWidget::dibujarCampaniaCompletada(QPainter& painter)
@@ -506,7 +552,7 @@ void GameWidget::dibujarCampaniaCompletada(QPainter& painter)
     painter.setPen(QColor(30, 55, 72));
     painter.drawText(QRectF(435, 315, 410, 28), Qt::AlignCenter, "Mikoto supero la piscina de entrenamiento y la torre experimental.");
     painter.drawText(QRectF(435, 353, 410, 28), Qt::AlignCenter, "R: repetir nivel final    M: volver al inicio");
-    painter.drawText(QRectF(435, 381, 410, 28), Qt::AlignCenter, "Tab: revisar otro nivel    F11: pantalla completa");
+    painter.drawText(QRectF(435, 381, 410, 28), Qt::AlignCenter, "F11: pantalla completa");
 }
 
 void GameWidget::dibujarMarcoJuego(QPainter& painter)
@@ -617,8 +663,12 @@ void GameWidget::actualizar()
             activarGameOver();
         }
     }
-    catch (const JuegoException&) {
+    catch (const JuegoException& error) {
+        hayError = true;
+        ultimoError = QString::fromUtf8(error.what());
+        qWarning() << error.what();
         QApplication::beep();
+        update();
     }
 
     update();
@@ -663,8 +713,15 @@ void GameWidget::paintEvent(QPaintEvent* event)
         if (estadoPantalla == PANTALLA_GAME_OVER) {
             dibujarGameOver(painter);
         }
+
+        if (hayError) {
+            dibujarError(painter);
+        }
     }
     catch (const JuegoException& error) {
+        hayError = true;
+        ultimoError = QString::fromUtf8(error.what());
+        qWarning() << error.what();
         painter.fillRect(QRectF(0, 0, ANCHO_BASE, ALTO_BASE), QColor(25, 25, 25));
         painter.setPen(Qt::white);
         painter.drawText(60, 80, "Error del juego:");
@@ -707,20 +764,24 @@ void GameWidget::keyPressEvent(QKeyEvent* event)
         return;
     }
 
-    if (event->key() == Qt::Key_1 || event->key() == Qt::Key_2 || event->key() == Qt::Key_3) {
+    if (estadoPantalla == PANTALLA_INICIO &&
+        (event->key() == Qt::Key_1 || event->key() == Qt::Key_2 || event->key() == Qt::Key_3)) {
         dificultadSeleccionada = event->key() == Qt::Key_1 ? FACIL : event->key() == Qt::Key_2 ? NORMAL : DIFICIL;
         aplicarDificultadSeleccionada();
         update();
         return;
     }
 
-    if (event->key() == Qt::Key_4 || event->key() == Qt::Key_5 ||
-        event->key() == Qt::Key_6 || event->key() == Qt::Key_7) {
+    if (estadoPantalla == PANTALLA_INICIO &&
+        (event->key() == Qt::Key_4 || event->key() == Qt::Key_5 ||
+         event->key() == Qt::Key_6 || event->key() == Qt::Key_7)) {
         personajeSeleccionado = event->key() == Qt::Key_4 ? PERSONAJE_MIKOTO :
                                 event->key() == Qt::Key_5 ? PERSONAJE_ACCELERATOR :
                                 event->key() == Qt::Key_6 ? PERSONAJE_MUGINO :
                                                             PERSONAJE_DARK_MATTER;
         aplicarPersonajeSeleccionado();
+        update();
+        return;
     }
 
     if (estadoPantalla == PANTALLA_INICIO) {

@@ -122,6 +122,7 @@ NivelPiscinaEntrenamiento::NivelPiscinaEntrenamiento()
     corrigiendoIzquierda = false;
     corrigiendoDerecha = false;
     usoImpulsoIntento = false;
+    motivoDerrotaActual = "";
 
     tiempoNivel = 0.0f;
     tiempoIntento = 0.0f;
@@ -392,6 +393,9 @@ void NivelPiscinaEntrenamiento::verificarSuelo()
     if ((pasoPiscinaSinEntrar || tocaSuelo) && !piscina.intersects(hitbox)) {
         errorEntrada = std::abs(static_cast<float>(jugador->centro().x() - zonaPerfecta.center().x()));
         velocidadEntrada = std::abs(jugador->getVY());
+        motivoDerrotaActual = pasoPiscinaSinEntrar
+                                   ? "Pasaste de largo sin entrar a la piscina."
+                                   : "Tocaste el piso antes de completar el clavado.";
         finalizarIntento(0, false);
     }
 }
@@ -443,6 +447,9 @@ void NivelPiscinaEntrenamiento::finalizarIntento(int puntajeIntento, bool entroA
         eventosSonido.push_back(SONIDO_NIVEL);
     }
     else if (intentoActual >= intentosMaximos) {
+        if (motivoDerrotaActual.isEmpty()) {
+            motivoDerrotaActual = "No alcanzaste el puntaje objetivo con los intentos disponibles.";
+        }
         nivelPerdido = true;
     }
     else {
@@ -801,15 +808,6 @@ void NivelPiscinaEntrenamiento::teclaPresionada(int tecla)
     if (tecla == Qt::Key_R) {
         reiniciarNivel();
     }
-    if (tecla == Qt::Key_1) {
-        cambiarDificultad(FACIL);
-    }
-    if (tecla == Qt::Key_2) {
-        cambiarDificultad(NORMAL);
-    }
-    if (tecla == Qt::Key_3) {
-        cambiarDificultad(DIFICIL);
-    }
 }
 
 void NivelPiscinaEntrenamiento::teclaLiberada(int tecla)
@@ -860,6 +858,7 @@ void NivelPiscinaEntrenamiento::reiniciarNivel()
     puntaje = 0;
     nivelSuperado = false;
     nivelPerdido = false;
+    motivoDerrotaActual = "";
     esperandoSiguienteIntento = false;
     intentoEvaluado = false;
     tiempoNivel = 0.0f;
@@ -896,6 +895,13 @@ bool NivelPiscinaEntrenamiento::estaSuperado() const
 bool NivelPiscinaEntrenamiento::estaPerdido() const
 {
     return nivelPerdido;
+}
+
+QString NivelPiscinaEntrenamiento::motivoDerrota() const
+{
+    return motivoDerrotaActual.isEmpty()
+               ? "No alcanzaste el puntaje objetivo del nivel."
+               : motivoDerrotaActual;
 }
 
 QString NivelPiscinaEntrenamiento::nombreNivel() const

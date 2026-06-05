@@ -61,6 +61,7 @@ private:
     bool corrigiendoIzquierda;
     bool corrigiendoDerecha;
     bool usoImpulsoIntento;
+    QString motivoDerrotaActual;
 
     float tiempoNivel;
     float tiempoIntento;
@@ -132,6 +133,7 @@ public:
     int getPuntaje() const;
     bool estaSuperado() const override;
     bool estaPerdido() const override;
+    QString motivoDerrota() const override;
     QString nombreNivel() const override;
     QVector<EventoSonidoJuego> consumirEventosSonido() override;
 };

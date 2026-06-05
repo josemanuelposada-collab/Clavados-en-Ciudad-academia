@@ -100,8 +100,6 @@ PercepcionDron DronVigilante::percibir(const Personaje& jugador) const
     float horizonte = 0.24f + presion * 0.42f;
 
     PercepcionDron percepcion;
-    percepcion.distanciaJugador = distancia2;
-    percepcion.velocidadJugador = rapidez2;
     percepcion.distanciaCuadrada = distancia2;
     percepcion.rapidezCuadrada = rapidez2;
     percepcion.dxJugador = dx;
