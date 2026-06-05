@@ -10,16 +10,16 @@ Obstaculo::Obstaculo(float xInicial, float yInicial, float anchoInicial, float a
       tipo(tipoInicial)
 {
     if (tipo == BOYA) {
-        sprite.load(":/recursos/sprites/obstaculo_boya.png");
+        rutaSprite = ":/recursos/sprites/obstaculo_boya.png";
     }
     else if (tipo == BARRIL) {
-        sprite.load(":/recursos/sprites/obstaculo_barril.png");
+        rutaSprite = ":/recursos/sprites/obstaculo_barril.png";
     }
     else if (tipo == MINA) {
-        sprite.load(":/recursos/sprites/obstaculo_mina.png");
+        rutaSprite = ":/recursos/sprites/obstaculo_mina.png";
     }
     else {
-        sprite.load(":/recursos/sprites/bloqueo.png");
+        rutaSprite = ":/recursos/sprites/bloqueo.png";
     }
 }
 
@@ -32,6 +32,7 @@ void Obstaculo::actualizar(float dt)
 void Obstaculo::dibujar(QPainter& painter)
 {
     QRect area = rect().toRect();
+    const QPixmap& sprite = SpriteCache::obtener(rutaSprite);
 
     if (!sprite.isNull()) {
         SpriteCache::dibujarAjustado(painter, sprite, area, "obstaculo");

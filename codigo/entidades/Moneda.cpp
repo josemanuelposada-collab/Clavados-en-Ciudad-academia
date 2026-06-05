@@ -9,9 +9,9 @@ Moneda::Moneda(float xInicial, float yInicial)
       recolectada(false),
       tiempo(0.0f),
       vx(0.0f),
-      vy(0.0f)
+      vy(0.0f),
+      rutaSprite(":/recursos/sprites/anillo_brillante.png")
 {
-    sprite.load(":/recursos/sprites/anillo_brillante.png");
 }
 
 void Moneda::actualizar(float dt)
@@ -35,6 +35,7 @@ void Moneda::dibujar(QPainter& painter)
     }
 
     QRect area = rect().toRect();
+    const QPixmap& sprite = SpriteCache::obtener(rutaSprite);
     if (!sprite.isNull()) {
         SpriteCache::dibujarAjustado(painter, sprite, area, "moneda");
     }

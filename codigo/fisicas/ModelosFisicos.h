@@ -79,7 +79,7 @@ namespace FisicaJuego
 class ModeloFisico
 {
 public:
-    virtual ~ModeloFisico() {}
+    virtual ~ModeloFisico() = default;
     virtual float calcular(float tiempo, float parametro) const = 0;
 };
 

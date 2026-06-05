@@ -65,7 +65,7 @@ public:
 
     PercepcionDron percibir(const Personaje& jugador) const;
     EstadoDron razonar(const PercepcionDron& percepcion);
-    void actuar(float dt, const Personaje& jugador);
+    void actuar(float dt, const PercepcionDron& percepcion);
     void aprender(float errorEntrada);
     void registrarAciertoJugador();
     void registrarImpactoJugador();

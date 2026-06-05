@@ -11,8 +11,7 @@ Plataforma::Plataforma()
     amplitud = 45.0f;
     frecuencia = 2.0f;
     tiempo = 0.0f;
-
-    spritePlataforma.load(":/recursos/sprites/plataforma_media.png");
+    rutaSprite = ":/recursos/sprites/plataforma_media.png";
 }
 
 void Plataforma::actualizar(float dt)
@@ -24,6 +23,7 @@ void Plataforma::actualizar(float dt)
 void Plataforma::dibujar(QPainter& painter)
 {
     QRectF area(x, y, ancho, alto);
+    const QPixmap& spritePlataforma = SpriteCache::obtener(rutaSprite);
 
     if (!spritePlataforma.isNull()) {
         SpriteCache::dibujarAjustado(painter, spritePlataforma, area.toRect(), "plataforma");
