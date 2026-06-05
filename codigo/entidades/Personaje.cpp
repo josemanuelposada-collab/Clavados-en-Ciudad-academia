@@ -1,5 +1,6 @@
 #include "Personaje.h"
 #include "../fisicas/ModelosFisicos.h"
+#include "../logica/JuegoException.h"
 #include "../render/SpriteCache.h"
 #include <algorithm>
 
@@ -32,18 +33,22 @@ void Personaje::cargarSprites()
 
     QString carpeta = ":/recursos/sprites/personajes/mikoto_misaka";
     QString prefijo = "mikoto_misaka";
+    QString spriteCaidaQuieta = "06_mikoto_misaka_correccion_lateral_aire_01_izquierda.png";
 
     if (tipo == PERSONAJE_ACCELERATOR) {
         carpeta = ":/recursos/sprites/personajes/accelerator";
         prefijo = "accelerator";
+        spriteCaidaQuieta = "14_accelerator_clavado_inverso_01.png";
     }
     else if (tipo == PERSONAJE_MUGINO) {
         carpeta = ":/recursos/sprites/personajes/mugino";
         prefijo = "mugino";
+        spriteCaidaQuieta = "14_mugino_clavado_inverso_01.png";
     }
     else if (tipo == PERSONAJE_DARK_MATTER) {
         carpeta = ":/recursos/sprites/personajes/dark_matter";
         prefijo = "dark_matter";
+        spriteCaidaQuieta = "16_dark_matter_clavado_especial_01.png";
     }
 
     cargarSecuencia(spritesIdle, carpeta, {
@@ -53,13 +58,13 @@ void Personaje::cargarSprites()
         "02_" + prefijo + "_salto_desde_altura_02_salto.png"
     });
     cargarSecuencia(spritesCaida, carpeta, {
-        "03_" + prefijo + "_caida_vertical_01.png"
+        spriteCaidaQuieta
     });
     cargarSecuencia(spritesIzquierda, carpeta, {
-        "06_" + prefijo + "_correccion_lateral_aire_01_izquierda.png"
+        "19_" + prefijo + "_clavado_espiral_02.png"
     });
     cargarSecuencia(spritesDerecha, carpeta, {
-        "09_" + prefijo + "_correccion_lateral_aire_04_derecha.png"
+        "20_" + prefijo + "_clavado_espiral_03.png"
     });
     cargarSecuencia(spritesImpulso, carpeta, {
         "11_" + prefijo + "_voltereta_tuck_01.png",
@@ -85,6 +90,20 @@ void Personaje::cargarSprites()
         "29_" + prefijo + "_emerger_del_agua_04.png",
         "30_" + prefijo + "_emerger_del_agua_05.png"
     });
+
+    if (spritesIdle.isEmpty() || spritesSalto.isEmpty() || spritesCaida.isEmpty()) {
+        throw JuegoException("No se pudieron cargar los sprites basicos de " + getNombre() + ".");
+    }
+
+    if (spritesIzquierda.isEmpty()) {
+        spritesIzquierda = spritesCaida;
+    }
+    if (spritesDerecha.isEmpty()) {
+        spritesDerecha = spritesCaida;
+    }
+    if (spritesSplash.isEmpty()) {
+        spritesSplash = spritesCaida;
+    }
 }
 
 void Personaje::cargarSecuencia(QVector<QPixmap>& destino, const QString& carpeta, const QStringList& archivos)
@@ -161,15 +180,15 @@ void Personaje::actualizar(float dt)
 void Personaje::dibujar(QPainter& painter)
 {
     const QVector<QPixmap>& secuencia = secuenciaActual();
-    QPixmap spriteActual;
+    const QPixmap* spriteActual = nullptr;
 
     if (!secuencia.isEmpty()) {
-        spriteActual = secuencia.first();
+        spriteActual = &secuencia.first();
     }
 
-    if (!spriteActual.isNull()) {
+    if (spriteActual != nullptr && !spriteActual->isNull()) {
         int spriteH = 84;
-        int spriteW = spriteActual.height() > 0 ? spriteActual.width() * spriteH / spriteActual.height() : 58;
+        int spriteW = spriteActual->height() > 0 ? spriteActual->width() * spriteH / spriteActual->height() : 58;
         spriteW = std::clamp(spriteW, 42, 118);
 
         QRect destino(
@@ -185,11 +204,11 @@ void Personaje::dibujar(QPainter& painter)
             QPoint centro = destino.center();
             painter.translate(centro);
             painter.rotate(izquierda ? -7.0 : 7.0);
-            painter.drawPixmap(QRect(-destino.width() / 2, -destino.height() / 2, destino.width(), destino.height()), spriteActual);
+            painter.drawPixmap(QRect(-destino.width() / 2, -destino.height() / 2, destino.width(), destino.height()), *spriteActual);
             painter.restore();
         }
         else {
-            SpriteCache::dibujarAjustado(painter, spriteActual, destino, "personaje_" + getNombre());
+            SpriteCache::dibujarAjustado(painter, *spriteActual, destino, "personaje_" + getNombre());
         }
     }
     else {
@@ -485,4 +504,9 @@ bool Personaje::estaEnAire() const
 bool Personaje::estaUsandoImpulso() const
 {
     return impulsoActivo;
+}
+
+bool Personaje::estaCorrigiendoLateral() const
+{
+    return enAire && (izquierda || derecha);
 }
