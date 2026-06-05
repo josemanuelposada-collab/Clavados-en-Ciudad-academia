@@ -1,5 +1,6 @@
 #include "DronVigilante.h"
 #include "../fisicas/ModelosFisicos.h"
+#include "../logica/JuegoException.h"
 #include "../render/SpriteCache.h"
 #include <algorithm>
 #include <cmath>
@@ -19,17 +20,31 @@ DronVigilante::DronVigilante(float xInicial, float yInicial)
       tendenciaError(0.0f),
       objetivoSuavizado(xInicial),
       presionActual(0.0f),
-      tiempoDisparo(0.0f)
+      tiempoDisparo(0.0f),
+      tiempoDesdeImpacto(0.0f),
+      impactosJugador(0),
+      evasionesJugador(0)
 {
     memoriaErrores.fill(0.0f);
     spriteNormal.load(":/recursos/sprites/dron_normal.png");
     spriteEscaneo.load(":/recursos/sprites/dron_escaneo.png");
     spriteAlerta.load(":/recursos/sprites/dron_alerta.png");
+
+    if (spriteNormal.isNull()) {
+        throw JuegoException("No se pudo cargar el sprite principal del dron vigilante.");
+    }
+    if (spriteEscaneo.isNull()) {
+        spriteEscaneo = spriteNormal;
+    }
+    if (spriteAlerta.isNull()) {
+        spriteAlerta = spriteNormal;
+    }
 }
 
 void DronVigilante::actualizar(float dt)
 {
     tiempo += dt;
+    tiempoDesdeImpacto += dt;
     x = xBase + 120.0f * std::sin(tiempo * 1.4f);
 }
 
@@ -37,6 +52,7 @@ void DronVigilante::actualizar(float dt, const Personaje& jugador)
 {
     tiempo += dt;
     tiempoDecision += dt;
+    tiempoDesdeImpacto += dt;
 
     if (tiempoDecision >= 0.18f) {
         estado = razonar(percibir(jugador));
@@ -165,6 +181,20 @@ void DronVigilante::registrarAciertoJugador()
     aciertosJugador++;
 }
 
+void DronVigilante::registrarImpactoJugador()
+{
+    impactosJugador++;
+    evasionesJugador = std::max(0, evasionesJugador - 1);
+    tiempoDesdeImpacto = 0.0f;
+    presionActual = calcularPresionDificultad();
+}
+
+void DronVigilante::registrarEvasionJugador()
+{
+    evasionesJugador++;
+    presionActual = calcularPresionDificultad();
+}
+
 void DronVigilante::reiniciarMemoriaParcial()
 {
     estado = PATRULLA;
@@ -241,14 +271,18 @@ QPointF DronVigilante::calcularVectorDisparo(const Personaje& jugador, float rap
 float DronVigilante::calcularPresionDificultad() const
 {
     if (memoriaCantidad == 0) {
-        return std::min(aciertosJugador * 0.12f, 0.40f);
+        float presionInicial = aciertosJugador * 0.12f + impactosJugador * 0.08f - evasionesJugador * 0.035f;
+        return std::clamp(presionInicial, 0.0f, 0.45f);
     }
 
     float promedio = sumaErrores / memoriaCantidad;
     float precisionJugador = 1.0f - std::min(promedio / 160.0f, 1.0f);
     float racha = std::min(aciertosJugador * 0.12f, 0.36f);
+    float presionImpactos = std::min(impactosJugador * 0.08f, 0.32f);
+    float alivioEvasiones = std::min(evasionesJugador * 0.035f, 0.22f);
+    float descanso = tiempoDesdeImpacto > 6.0f ? -0.08f : 0.0f;
     float tendencia = tendenciaError < -4.0f ? 0.10f : tendenciaError > 8.0f ? -0.06f : 0.0f;
-    return std::clamp(precisionJugador + racha + tendencia, 0.0f, 1.0f);
+    return std::clamp(precisionJugador + racha + presionImpactos + tendencia + descanso - alivioEvasiones, 0.0f, 1.0f);
 }
 
 EstadoDron DronVigilante::getEstado() const
