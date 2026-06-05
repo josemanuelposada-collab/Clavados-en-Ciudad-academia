@@ -9,6 +9,8 @@
 class SpriteCache
 {
 public:
+    static const QPixmap& obtener(const QString& ruta);
+
     static void dibujarAjustado(QPainter& painter,
                                 const QPixmap& sprite,
                                 const QRect& destino,

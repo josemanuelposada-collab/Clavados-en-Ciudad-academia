@@ -61,6 +61,19 @@ bool ProyectilDron::usaColisionElastica() const
     return elastico;
 }
 
+void ProyectilDron::reiniciar(float nuevoX, float nuevoY, float nuevoVX, float nuevoVY, bool colisionElastica)
+{
+    x = nuevoX;
+    y = nuevoY;
+    vx = nuevoVX;
+    vy = nuevoVY;
+    elastico = colisionElastica;
+    masa = elastico ? 0.62f : 1.35f;
+    tiempoVida = 0.0f;
+    activo = true;
+    color = elastico ? QColor(110, 220, 255) : QColor(255, 185, 70);
+}
+
 void ProyectilDron::desactivar()
 {
     activo = false;

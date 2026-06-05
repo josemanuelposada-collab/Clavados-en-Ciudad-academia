@@ -3,7 +3,7 @@
 
 #include <QPainter>
 #include <QRectF>
-#include <QPixmap>
+#include <QString>
 #include "Entidad.h"
 #include "../fisicas/ModelosFisicos.h"
 
@@ -16,7 +16,7 @@ private:
     float tiempo;
     ModeloOscilatorio oscilacion;
 
-    QPixmap spritePlataforma;
+    QString rutaSprite;
 
 public:
     Plataforma();

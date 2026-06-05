@@ -5,9 +5,9 @@
 Anillo::Anillo(float xInicial, float yInicial)
     : Entidad(xInicial, yInicial, 42.0f, 42.0f),
       recolectado(false),
-      tiempo(0.0f)
+      tiempo(0.0f),
+      rutaSprite(":/recursos/sprites/anillo_dorado.png")
 {
-    sprite.load(":/recursos/sprites/anillo_dorado.png");
 }
 
 void Anillo::actualizar(float dt)
@@ -23,6 +23,7 @@ void Anillo::dibujar(QPainter& painter)
     }
 
     QRect area = rect().toRect();
+    const QPixmap& sprite = SpriteCache::obtener(rutaSprite);
     if (!sprite.isNull()) {
         SpriteCache::dibujarAjustado(painter, sprite, area, "anillo");
     }

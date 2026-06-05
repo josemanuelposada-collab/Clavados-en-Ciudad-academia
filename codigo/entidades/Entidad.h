@@ -14,7 +14,7 @@ protected:
 
 public:
     Entidad(float xInicial, float yInicial, float anchoInicial, float altoInicial);
-    virtual ~Entidad();
+    virtual ~Entidad() = default;
 
     virtual void actualizar(float dt) = 0;
     virtual void dibujar(QPainter& painter) = 0;

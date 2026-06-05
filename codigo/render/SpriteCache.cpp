@@ -1,6 +1,19 @@
 #include "SpriteCache.h"
 
+#include <QHash>
 #include <QPixmapCache>
+
+const QPixmap& SpriteCache::obtener(const QString& ruta)
+{
+    static QHash<QString, QPixmap> cacheOriginales;
+
+    auto it = cacheOriginales.find(ruta);
+    if (it == cacheOriginales.end()) {
+        it = cacheOriginales.insert(ruta, QPixmap(ruta));
+    }
+
+    return it.value();
+}
 
 void SpriteCache::dibujarAjustado(QPainter& painter,
                                   const QPixmap& sprite,

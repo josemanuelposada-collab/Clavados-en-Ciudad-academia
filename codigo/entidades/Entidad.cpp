@@ -8,10 +8,6 @@ Entidad::Entidad(float xInicial, float yInicial, float anchoInicial, float altoI
 {
 }
 
-Entidad::~Entidad()
-{
-}
-
 QRectF Entidad::rect() const
 {
     return QRectF(x, y, ancho, alto);

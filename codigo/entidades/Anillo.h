@@ -2,14 +2,14 @@
 #define ANILLO_H
 
 #include "Entidad.h"
-#include <QPixmap>
+#include <QString>
 
 class Anillo : public Entidad
 {
 private:
     bool recolectado;
     float tiempo;
-    QPixmap sprite;
+    QString rutaSprite;
 
 public:
     Anillo(float xInicial, float yInicial);

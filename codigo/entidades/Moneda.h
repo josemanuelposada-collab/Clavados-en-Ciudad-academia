@@ -2,7 +2,7 @@
 #define MONEDA_H
 
 #include "Entidad.h"
-#include <QPixmap>
+#include <QString>
 
 class Moneda : public Entidad
 {
@@ -11,7 +11,7 @@ private:
     float tiempo;
     float vx;
     float vy;
-    QPixmap sprite;
+    QString rutaSprite;
 
 public:
     Moneda(float xInicial, float yInicial);

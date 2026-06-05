@@ -23,6 +23,7 @@ public:
 
     bool estaActivo() const;
     bool usaColisionElastica() const;
+    void reiniciar(float nuevoX, float nuevoY, float nuevoVX, float nuevoVY, bool colisionElastica);
     void desactivar();
 
     float getVX() const;

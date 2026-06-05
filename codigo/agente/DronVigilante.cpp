@@ -54,27 +54,28 @@ void DronVigilante::actualizar(float dt, const Personaje& jugador)
     tiempoDecision += dt;
     tiempoDesdeImpacto += dt;
 
+    PercepcionDron percepcion = percibir(jugador);
     if (tiempoDecision >= 0.18f) {
-        estado = razonar(percibir(jugador));
+        estado = razonar(percepcion);
         tiempoDecision = 0.0f;
     }
 
-    actuar(dt, jugador);
+    actuar(dt, percepcion);
 }
 
 void DronVigilante::dibujar(QPainter& painter)
 {
-    QPixmap sprite = spriteNormal;
+    const QPixmap* sprite = &spriteNormal;
     if ((estado == ESCANEO || estado == ANTICIPA) && !spriteEscaneo.isNull()) {
-        sprite = spriteEscaneo;
+        sprite = &spriteEscaneo;
     }
     else if (estado == INTERCEPTA && !spriteAlerta.isNull()) {
-        sprite = spriteAlerta;
+        sprite = &spriteAlerta;
     }
 
     QRect area = rect().toRect();
-    if (!sprite.isNull()) {
-        SpriteCache::dibujarAjustado(painter, sprite, area, "dron");
+    if (!sprite->isNull()) {
+        SpriteCache::dibujarAjustado(painter, *sprite, area, "dron");
     }
     else {
         painter.setPen(Qt::black);
@@ -99,8 +100,8 @@ PercepcionDron DronVigilante::percibir(const Personaje& jugador) const
     float horizonte = 0.24f + presion * 0.42f;
 
     PercepcionDron percepcion;
-    percepcion.distanciaJugador = std::sqrt(distancia2);
-    percepcion.velocidadJugador = std::sqrt(rapidez2);
+    percepcion.distanciaJugador = distancia2;
+    percepcion.velocidadJugador = rapidez2;
     percepcion.distanciaCuadrada = distancia2;
     percepcion.rapidezCuadrada = rapidez2;
     percepcion.dxJugador = dx;
@@ -130,7 +131,7 @@ EstadoDron DronVigilante::razonar(const PercepcionDron& percepcion)
     return PATRULLA;
 }
 
-void DronVigilante::actuar(float dt, const Personaje& jugador)
+void DronVigilante::actuar(float dt, const PercepcionDron& percepcion)
 {
     if (estado == PATRULLA) {
         float amplitud = 112.0f + presionActual * 36.0f;
@@ -138,7 +139,6 @@ void DronVigilante::actuar(float dt, const Personaje& jugador)
         return;
     }
 
-    PercepcionDron percepcion = percibir(jugador);
     float objetivo = std::clamp(percepcion.prediccionX - ancho / 2.0f, 0.0f, 800.0f - ancho);
     objetivoSuavizado = objetivoSuavizado * 0.82f + objetivo * 0.18f;
 

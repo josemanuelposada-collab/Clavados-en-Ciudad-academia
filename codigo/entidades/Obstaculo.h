@@ -2,7 +2,7 @@
 #define OBSTACULO_H
 
 #include "Entidad.h"
-#include <QPixmap>
+#include <QString>
 
 enum TipoObstaculo
 {
@@ -18,7 +18,7 @@ private:
     float vx;
     float vy;
     TipoObstaculo tipo;
-    QPixmap sprite;
+    QString rutaSprite;
 
 public:
     Obstaculo(float xInicial, float yInicial, float anchoInicial, float altoInicial,
