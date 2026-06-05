@@ -45,6 +45,8 @@ private:
     QPixmap spriteAdvertenciaHud;
     QPixmap spriteCorazonLleno;
     QPixmap spriteCorazonVacio;
+    QPixmap spritePlataformaInicio;
+    QPixmap spriteAlrededorPiscina;
 
     Dificultad dificultad;
     QVector<EventoSonidoJuego> eventosSonido;
@@ -77,6 +79,7 @@ private:
     float direccionRafaga;
     float yRafaga;
     float tiempoEntradaDron;
+    float tiempoCorreccionLateral;
     int calidadEntrada;
     bool nivelSuperado;
     bool nivelPerdido;
