@@ -48,6 +48,9 @@ private:
     float objetivoSuavizado;
     float presionActual;
     float tiempoDisparo;
+    float tiempoDesdeImpacto;
+    int impactosJugador;
+    int evasionesJugador;
 
     QPixmap spriteNormal;
     QPixmap spriteEscaneo;
@@ -65,6 +68,8 @@ public:
     void actuar(float dt, const Personaje& jugador);
     void aprender(float errorEntrada);
     void registrarAciertoJugador();
+    void registrarImpactoJugador();
+    void registrarEvasionJugador();
     void reiniciarMemoriaParcial();
     void colocarEn(float nuevoX, float nuevoY);
     void colocarY(float nuevoY);
