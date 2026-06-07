@@ -29,6 +29,8 @@
         <file>recursos/sprites/dron_normal.png</file>
         <file>recursos/sprites/edificio_cristal_academia.png</file>
         <file>recursos/sprites/fondo_ciudad_academia.png</file>
+        <file>recursos/sprites/fondo_carga_ciudad_academia_pixel.png</file>
+        <file>recursos/sprites/fondo_menu_ciudad_academia_pixel.png</file>
         <file>recursos/sprites/fondo_vertical_entrenamiento.png</file>
         <file>recursos/sprites/fondo_vertical_torre.png</file>
         <file>recursos/sprites/gradas_academia.png</file>
@@ -81,6 +83,10 @@
         <file>recursos/sprites/plataforma_media.png</file>
         <file>recursos/sprites/piscina_ciudad_academia.png</file>
         <file>recursos/sprites/piscina_final_premium.png</file>
+        <file>recursos/sprites/poder_accelerator_vector.png</file>
+        <file>recursos/sprites/poder_dark_matter_espiral.png</file>
+        <file>recursos/sprites/poder_mikoto_iman.png</file>
+        <file>recursos/sprites/poder_mugino_meltdowner.png</file>
         <file>recursos/sprites/salpicadura_media_pixel.png</file>
         <file>recursos/sprites/salpicadura_pequena.png</file>
         <file>recursos/sprites/salpicadura_grande.png</file>
