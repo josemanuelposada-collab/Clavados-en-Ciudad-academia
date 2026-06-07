@@ -1,5 +1,6 @@
 #include "NivelRutaAnillos.h"
 #include "../fisicas/ModelosFisicos.h"
+#include "../render/SpriteCache.h"
 #include "JuegoException.h"
 #include <QKeyEvent>
 #include <QLinearGradient>
@@ -9,6 +10,11 @@
 
 namespace {
 constexpr std::size_t MAX_PROYECTILES_DRON = 12;
+constexpr float RETARDO_ENTRADA_DRON = 2.25f;
+constexpr float DURACION_ENTRADA_DRON = 0.95f;
+constexpr float DURACION_INVULNERABILIDAD = 1.0f;
+constexpr float LIMITE_X_JUGADOR_IZQ = 40.0f;
+constexpr float LIMITE_X_JUGADOR_DER = 725.0f;
 
 void panel(QPainter& painter, const QRectF& rect, const QColor& color)
 {
@@ -66,6 +72,36 @@ void dibujarPisoAlrededorPiscina(QPainter& painter,
     painter.drawRect(exterior.adjusted(1.0, 1.0, -1.0, -1.0));
     painter.restore();
 }
+
+void dibujarSpritePoderAnimado(QPainter& painter, const QPixmap& hoja, const QRectF& destino,
+                               float tiempo, bool espejo = false)
+{
+    if (hoja.isNull() || hoja.width() < 3) {
+        return;
+    }
+
+    constexpr int CUADROS = 3;
+    const int anchoCuadro = hoja.width() / CUADROS;
+    const int cuadro = static_cast<int>(tiempo * 12.0f) % CUADROS;
+    const QRectF fuente(cuadro * anchoCuadro, 0, anchoCuadro, hoja.height());
+
+    painter.save();
+    painter.setRenderHint(QPainter::SmoothPixmapTransform, false);
+    if (espejo) {
+        painter.translate(destino.center());
+        painter.scale(-1.0, 1.0);
+        painter.drawPixmap(QRectF(-destino.width() * 0.5,
+                                  -destino.height() * 0.5,
+                                  destino.width(),
+                                  destino.height()),
+                           hoja,
+                           fuente);
+    }
+    else {
+        painter.drawPixmap(destino, hoja, fuente);
+    }
+    painter.restore();
+}
 }
 
 NivelRutaAnillos::NivelRutaAnillos()
@@ -105,6 +141,7 @@ NivelRutaAnillos::NivelRutaAnillos()
       tiempoEntradaDron(0.0f),
       tiempoCorreccionLateral(0.0f),
       tiempoInvulnerable(0.0f),
+      poderUsadoNivel(false),
       calidadEntrada(0),
       nivelSuperado(false),
       nivelPerdido(false),
@@ -115,31 +152,35 @@ NivelRutaAnillos::NivelRutaAnillos()
       motivoDerrotaActual("")
 {
     dificultad.configurar(NORMAL);
-    spriteAlarma.load(":/recursos/sprites/alarma.png");
-    spriteViento.load(":/recursos/sprites/viento_turbulencia.png");
-    spriteVientoDerecha.load(":/recursos/sprites/velocidad_derecha.png");
-    spriteVientoIzquierda.load(":/recursos/sprites/velocidad_izquierda.png");
-    spritePiscinaFinal.load(":/recursos/sprites/piscina_ciudad_academia.png");
-    spriteColumnaTorre.load(":/recursos/sprites/torre_columna_luz.png");
-    spriteFondo.load(":/recursos/sprites/fondo_vertical_torre.png");
-    spriteBanderines.load(":/recursos/sprites/banderines_academia.png");
-    spriteEdificio.load(":/recursos/sprites/edificio_cristal_academia.png");
-    spriteTorreEpica.load(":/recursos/sprites/torre_salto_epica.png");
-    spritePiscinaPremium.load(":/recursos/sprites/piscina_final_premium.png");
-    spriteAguaProfunda.load(":/recursos/sprites/agua_profunda.png");
-    spriteChapuzonLimpio.load(":/recursos/sprites/chapuzon_limpio.png");
-    spriteChapuzonMedio.load(":/recursos/sprites/chapuzon_medio.png");
-    spriteChapuzonFuerte.load(":/recursos/sprites/chapuzon_fuerte.png");
-    spriteBurbujas.load(":/recursos/sprites/burbujas_entrada.png");
-    spriteTexturaTierra.load(":/recursos/sprites/textura_tierra_borde.png");
-    spriteDecoracionIzq.load(":/recursos/sprites/decoracion_piscina_izq.png");
-    spriteDecoracionDer.load(":/recursos/sprites/decoracion_piscina_der.png");
-    spriteTexturaPixel.load(":/recursos/sprites/textura_pixel_overlay.png");
-    spriteAdvertenciaHud.load(":/recursos/sprites/hud_advertencia.png");
-    spriteCorazonLleno.load(":/recursos/sprites/hud_corazon_lleno.png");
-    spriteCorazonVacio.load(":/recursos/sprites/hud_corazon_vacio.png");
-    spritePlataformaInicio.load(":/recursos/sprites/plataforma_media.png");
-    spriteAlrededorPiscina.load(":/recursos/sprites/alrededor_piscina.jpg");
+    spriteAlarma = SpriteCache::obtener(":/recursos/sprites/alarma.png");
+    spriteViento = SpriteCache::obtener(":/recursos/sprites/viento_turbulencia.png");
+    spriteVientoDerecha = SpriteCache::obtener(":/recursos/sprites/velocidad_derecha.png");
+    spriteVientoIzquierda = SpriteCache::obtener(":/recursos/sprites/velocidad_izquierda.png");
+    spritePiscinaFinal = SpriteCache::obtener(":/recursos/sprites/piscina_ciudad_academia.png");
+    spriteColumnaTorre = SpriteCache::obtener(":/recursos/sprites/torre_columna_luz.png");
+    spriteFondo = SpriteCache::obtener(":/recursos/sprites/fondo_vertical_torre.png");
+    spriteBanderines = SpriteCache::obtener(":/recursos/sprites/banderines_academia.png");
+    spriteEdificio = SpriteCache::obtener(":/recursos/sprites/edificio_cristal_academia.png");
+    spriteTorreEpica = SpriteCache::obtener(":/recursos/sprites/torre_salto_epica.png");
+    spritePiscinaPremium = SpriteCache::obtener(":/recursos/sprites/piscina_final_premium.png");
+    spriteAguaProfunda = SpriteCache::obtener(":/recursos/sprites/agua_profunda.png");
+    spriteChapuzonLimpio = SpriteCache::obtener(":/recursos/sprites/chapuzon_limpio.png");
+    spriteChapuzonMedio = SpriteCache::obtener(":/recursos/sprites/chapuzon_medio.png");
+    spriteChapuzonFuerte = SpriteCache::obtener(":/recursos/sprites/chapuzon_fuerte.png");
+    spriteBurbujas = SpriteCache::obtener(":/recursos/sprites/burbujas_entrada.png");
+    spriteTexturaTierra = SpriteCache::obtener(":/recursos/sprites/textura_tierra_borde.png");
+    spriteDecoracionIzq = SpriteCache::obtener(":/recursos/sprites/decoracion_piscina_izq.png");
+    spriteDecoracionDer = SpriteCache::obtener(":/recursos/sprites/decoracion_piscina_der.png");
+    spriteTexturaPixel = SpriteCache::obtener(":/recursos/sprites/textura_pixel_overlay.png");
+    spriteAdvertenciaHud = SpriteCache::obtener(":/recursos/sprites/hud_advertencia.png");
+    spriteCorazonLleno = SpriteCache::obtener(":/recursos/sprites/hud_corazon_lleno.png");
+    spriteCorazonVacio = SpriteCache::obtener(":/recursos/sprites/hud_corazon_vacio.png");
+    spritePlataformaInicio = SpriteCache::obtener(":/recursos/sprites/plataforma_media.png");
+    spriteAlrededorPiscina = SpriteCache::obtener(":/recursos/sprites/alrededor_piscina.jpg");
+    spritePoderMikoto = SpriteCache::obtener(":/recursos/sprites/poder_mikoto_iman.png");
+    spritePoderAccelerator = SpriteCache::obtener(":/recursos/sprites/poder_accelerator_vector.png");
+    spritePoderMugino = SpriteCache::obtener(":/recursos/sprites/poder_mugino_meltdowner.png");
+    spritePoderDarkMatter = SpriteCache::obtener(":/recursos/sprites/poder_dark_matter_espiral.png");
     exigirSprite(spriteFondo, "fondo_vertical_torre.png");
     exigirSprite(spritePiscinaPremium, "piscina_final_premium.png");
     exigirSprite(spriteCorazonLleno, "hud_corazon_lleno.png");
@@ -162,6 +203,15 @@ void NivelRutaAnillos::crearEntidades()
     float factor = dificultad.getVelocidadPlataforma();
     anillos.reserve(9);
     obstaculos.reserve(8);
+    anillos.emplace_back(std::make_unique<Anillo>(430.0f, 720.0f));
+    anillos.emplace_back(std::make_unique<Anillo>(255.0f, 1280.0f));
+    anillos.emplace_back(std::make_unique<Anillo>(575.0f, 1840.0f));
+    anillos.emplace_back(std::make_unique<Anillo>(330.0f, 2470.0f));
+    anillos.emplace_back(std::make_unique<Anillo>(548.0f, 3090.0f));
+    anillos.emplace_back(std::make_unique<Anillo>(230.0f, 3780.0f));
+    anillos.emplace_back(std::make_unique<Anillo>(610.0f, 4510.0f));
+    anillos.emplace_back(std::make_unique<Anillo>(395.0f, 5260.0f));
+
     obstaculos.emplace_back(std::make_unique<Obstaculo>(130.0f, 720.0f, 54.0f, 54.0f, 52.0f * factor, 0.0f, BOYA));
     obstaculos.emplace_back(std::make_unique<Obstaculo>(575.0f, 1380.0f, 58.0f, 58.0f, -64.0f * factor, 0.0f, BARRIL));
     obstaculos.emplace_back(std::make_unique<Obstaculo>(210.0f, 2050.0f, 54.0f, 54.0f, 72.0f * factor, 0.0f, MINA));
@@ -171,7 +221,7 @@ void NivelRutaAnillos::crearEntidades()
     obstaculos.emplace_back(std::make_unique<Obstaculo>(230.0f, 4860.0f, 54.0f, 54.0f, 82.0f * factor, 0.0f, MINA));
     obstaculos.emplace_back(std::make_unique<Obstaculo>(560.0f, 5360.0f, 56.0f, 56.0f, -86.0f * factor, 0.0f, BLOQUEO));
 
-    if (obstaculos.empty()) {
+    if (obstaculos.empty() || anillos.empty()) {
         throw JuegoException("La torre experimental no pudo crear sus entidades.");
     }
 }
@@ -255,8 +305,6 @@ void NivelRutaAnillos::actualizar(float dt)
     }
 
     tiempoEntradaDron += dt;
-    constexpr float RETARDO_ENTRADA_DRON = 2.25f;
-    constexpr float DURACION_ENTRADA_DRON = 0.95f;
     if (tiempoEntradaDron >= RETARDO_ENTRADA_DRON) {
         float progresoEntrada = std::clamp((tiempoEntradaDron - RETARDO_ENTRADA_DRON) / DURACION_ENTRADA_DRON, 0.0f, 1.0f);
         float yDron = std::clamp(jugador->getY() - 145.0f, 95.0f, alturaMundo - 250.0f);
@@ -273,6 +321,7 @@ void NivelRutaAnillos::actualizar(float dt)
 
         if (dronActivo) {
             dron->actualizar(dt, *jugador);
+            aplicarPresionAgente(dt);
             if (dron->solicitarDisparo(dt, *jugador)) {
                 crearProyectilDron();
             }
@@ -300,6 +349,11 @@ void NivelRutaAnillos::actualizarMonedas(float dt)
     const float atraccionMonedas = jugador->getAtraccionMonedas();
     const bool imanActivo = tiempoIman > 0.0f;
 
+    if (imanActivo && tipoJugador == PERSONAJE_MUGINO) {
+        aplicarMeltdownerInstantaneo();
+        return;
+    }
+
     for (const auto& moneda : monedas) {
         if (moneda->estaRecolectada()) {
             continue;
@@ -315,11 +369,7 @@ void NivelRutaAnillos::actualizarMonedas(float dt)
 
         if (imanActivo) {
             if (tipoJugador == PERSONAJE_ACCELERATOR && dentroDelRadio(radioIman * 1.18f)) {
-                moneda->desplazarVectorialHacia(objetivo, atraccionMonedas * 1.35f, radioIman * 1.18f, dt);
-            }
-            else if (tipoJugador == PERSONAJE_MUGINO) {
-                QPointF foco(objetivo.x(), objetivo.y());
-                moneda->canalizarMeltdowner(foco, atraccionMonedas * 1.18f, radioIman * 0.62f, dt);
+                moneda->atraerRectilineoHacia(objetivo, atraccionMonedas * 3.2f, radioIman * 1.18f, dt);
             }
             else if (tipoJugador == PERSONAJE_DARK_MATTER && dentroDelRadio(radioIman * 1.12f)) {
                 moneda->orbitarHacia(objetivo, atraccionMonedas * 1.05f, radioIman * 1.12f, dt);
@@ -332,8 +382,54 @@ void NivelRutaAnillos::actualizarMonedas(float dt)
         if (contraer(moneda->rect(), 7.0f, 7.0f).intersects(hitboxJugador)) {
             moneda->recolectar();
             monedasRecolectadas++;
+            dron->registrarBonusRecolectado();
             eventosSonido.push_back(SONIDO_ANILLO);
         }
+    }
+}
+
+void NivelRutaAnillos::aplicarMeltdownerInstantaneo()
+{
+    bool recolecto = false;
+
+    for (const auto& moneda : monedas) {
+        if (moneda->estaRecolectada()) {
+            continue;
+        }
+
+        moneda->recolectar();
+        monedasRecolectadas++;
+        dron->registrarBonusRecolectado();
+        recolecto = true;
+    }
+
+    for (const auto& anillo : anillos) {
+        if (anillo->estaRecolectado()) {
+            continue;
+        }
+
+        anillo->recolectar();
+        anillosRecolectados++;
+        dron->registrarBonusRecolectado();
+        recolecto = true;
+    }
+
+    if (recolecto) {
+        eventosSonido.push_back(SONIDO_ANILLO);
+    }
+}
+
+void NivelRutaAnillos::aplicarPresionAgente(float dt)
+{
+    float presion = dron->obtenerPresionAdaptativa();
+
+    if (presion > 0.36f && tiempoRafaga <= 0.0f && tiempoProximaRafaga > 0.55f) {
+        tiempoProximaRafaga -= dt * presion * 0.65f;
+    }
+
+    if (presion > 0.52f && !entradaAguaActiva) {
+        float direccion = piscinaFinal.center().x() < jugador->centro().x() ? 1.0f : -1.0f;
+        piscinaVelocidad += direccion * presion * 10.0f * dt;
     }
 }
 
@@ -348,29 +444,28 @@ void NivelRutaAnillos::aplicarMovimientoJugador(float dt)
 
     float gravedad = (dificultad.getTipo() == FACIL ? 30.0f : dificultad.getTipo() == NORMAL ? 38.0f : 48.0f) *
                     dificultad.getFactorGravedad() * jugador->getFactorGravedad();
-    float controlHorizontal = 0.0f;
+    float aceleracionHorizontal = 0.0f;
+    float aceleracionVertical = gravedad;
 
     if (teclaIzquierda) {
-        controlHorizontal -= 560.0f;
+        aceleracionHorizontal -= 560.0f * jugador->getControlLateral();
     }
     if (teclaDerecha) {
-        controlHorizontal += 560.0f;
+        aceleracionHorizontal += 560.0f * jugador->getControlLateral();
     }
     if (teclaArriba) {
-        velocidadVertical = std::max(36.0f, velocidadVertical - 150.0f * dt);
+        aceleracionVertical -= velocidadVertical > 65.0f ? 150.0f : 35.0f;
     }
     if (teclaAbajo) {
-        velocidadVertical += 145.0f * dt;
+        aceleracionVertical += 145.0f;
     }
 
-    velocidadHorizontal += controlHorizontal * jugador->getControlLateral() * dt;
-    velocidadHorizontal *= 0.970f * jugador->getFactorArrastre() / 0.995f;
-    FisicaJuego::integrarVelocidad(velocidadVertical, gravedad, dt);
+    velocidadHorizontal = FisicaJuego::aplicarArrastre(velocidadHorizontal, 1.9f / jugador->getFactorArrastre(), dt);
 
     if (zonaViento.intersects(jugador->rect())) {
         float direccionVientoZona = std::sin(tiempoNivel * 0.45f) >= 0.0f ? 1.0f : -1.0f;
         float turbulencia = dificultad.getIntensidadViento() * (1.15f + 0.42f * std::sin(tiempoNivel * 3.4f));
-        velocidadHorizontal += direccionVientoZona * turbulencia * dt;
+        aceleracionHorizontal += direccionVientoZona * turbulencia;
     }
 
     tiempoProximaRafaga -= dt;
@@ -389,7 +484,7 @@ void NivelRutaAnillos::aplicarMovimientoJugador(float dt)
         tiempoRafaga -= dt;
         float distanciaY = std::abs(jugador->centro().y() - yRafaga);
         float influencia = std::clamp(1.0f - distanciaY / 320.0f, 0.25f, 1.0f);
-        FisicaJuego::integrarVelocidad(velocidadHorizontal, direccionRafaga * intensidadRafaga * influencia, dt);
+        aceleracionHorizontal += direccionRafaga * intensidadRafaga * influencia;
         velocidadVertical *= 0.998f;
     }
 
@@ -418,9 +513,14 @@ void NivelRutaAnillos::aplicarMovimientoJugador(float dt)
 
     float nuevoX = jugador->getX();
     float nuevoY = jugador->getY();
-    FisicaJuego::integrarPosicion(nuevoX, velocidadHorizontal, dt);
-    FisicaJuego::integrarPosicion(nuevoY, velocidadVertical, dt);
-    nuevoX = std::clamp(nuevoX, 40.0f, 725.0f);
+    FisicaJuego::integrarMovimientoAcelerado(nuevoX, velocidadHorizontal, aceleracionHorizontal, dt);
+    FisicaJuego::integrarMovimientoAcelerado(nuevoY, velocidadVertical, aceleracionVertical, dt);
+    if (tiempoEntradaDron > 0.85f && velocidadVertical < 24.0f) {
+        velocidadVertical = 24.0f;
+    }
+    velocidadVertical = std::clamp(velocidadVertical, -90.0f, 860.0f);
+    velocidadHorizontal = std::clamp(velocidadHorizontal, -430.0f, 430.0f);
+    nuevoX = std::clamp(nuevoX, LIMITE_X_JUGADOR_IZQ, LIMITE_X_JUGADOR_DER);
     nuevoY = std::clamp(nuevoY, 82.0f, alturaMundo - 62.0f);
     if (nuevoY <= 82.0f && velocidadVertical < 0.0f) {
         velocidadVertical = 0.0f;
@@ -436,6 +536,7 @@ void NivelRutaAnillos::verificarInteracciones()
         if (!anillo->estaRecolectado() && contraer(anillo->rect(), 8.0f, 8.0f).intersects(jugador->hitboxAjustada())) {
             anillo->recolectar();
             anillosRecolectados++;
+            dron->registrarBonusRecolectado();
             dron->aprender(35.0f);
             eventosSonido.push_back(SONIDO_ANILLO);
         }
@@ -456,7 +557,7 @@ void NivelRutaAnillos::verificarInteracciones()
             velocidadHorizontal *= -0.45f;
             velocidadVertical = std::max(120.0f, velocidadVertical * 0.72f);
             dron->aprender(165.0f);
-            tiempoInvulnerable = 1.0f;
+            tiempoInvulnerable = DURACION_INVULNERABILIDAD;
             jugador->colocarEn(std::clamp(jugador->getX() + 55.0f, 45.0f, 720.0f), jugador->getY() - 35.0f);
             eventosSonido.push_back(SONIDO_COLISION);
             return;
@@ -467,7 +568,7 @@ void NivelRutaAnillos::verificarInteracciones()
         golpes++;
         tiempoRestante = std::max(0.0f, tiempoRestante - 3.0f);
         velocidadHorizontal += jugador->centro().x() < dron->centro().x() ? -160.0f : 160.0f;
-        tiempoInvulnerable = 1.0f;
+        tiempoInvulnerable = DURACION_INVULNERABILIDAD;
         eventosSonido.push_back(SONIDO_COLISION);
     }
 
@@ -489,7 +590,8 @@ void NivelRutaAnillos::verificarInteracciones()
         nivelPerdido = true;
         jugador->detenerMovimiento();
         proyectilesDron.clear();
-        dron->aprender(180.0f);
+        float errorSalida = std::abs(jugador->centro().x() - (piscinaFinal.x() + piscinaFinal.width() / 2.0f));
+        dron->registrarResultado(errorSalida, static_cast<float>(puntaje), poderUsadoNivel);
         eventosSonido.push_back(SONIDO_COLISION);
     }
 }
@@ -542,7 +644,7 @@ void NivelRutaAnillos::actualizarProyectilesDron(float dt)
             tiempoRestante = std::max(0.0f, tiempoRestante - (proyectil->usaColisionElastica() ? 0.8f : 1.8f));
             dron->aprender(170.0f);
             dron->registrarImpactoJugador();
-            tiempoInvulnerable = 1.0f;
+            tiempoInvulnerable = DURACION_INVULNERABILIDAD;
             eventosSonido.push_back(SONIDO_COLISION);
         }
         else if (estabaActivo && !proyectil->estaActivo()) {
@@ -613,7 +715,8 @@ void NivelRutaAnillos::registrarEntradaAgua()
 
     jugador->detenerMovimiento();
     jugador->colocarEn(xEntradaAgua - jugador->getAncho() / 2.0f, piscinaFinal.y() + 34.0f);
-    dron->aprender(100.0f - puntaje);
+    float errorEntrada = std::abs(xEntradaAgua - (piscinaFinal.x() + piscinaFinal.width() / 2.0f));
+    dron->registrarResultado(errorEntrada, static_cast<float>(puntaje), poderUsadoNivel);
     eventosSonido.push_back(SONIDO_AGUA);
 
     if (resultadoEntradaSuperado) {
@@ -634,6 +737,7 @@ void NivelRutaAnillos::calcularPuntaje()
     float progreso = std::clamp((jugador->getY() - 128.0f) / recorridoTotal, 0.0f, 1.0f);
     int ruta = static_cast<int>(progreso * 38.0f);
     int bonusMonedas = std::min(26, monedasRecolectadas * 2) + (monedasRecolectadas >= 8 ? 5 : 0);
+    int bonusAnillos = std::min(20, anillosRecolectados * 3) + (anillosRecolectados >= 6 ? 5 : 0);
     int bonusRitmo = static_cast<int>(std::max(0.0f, tiempoRestante) * 0.12f);
     int bonusVelocidad = velocidadVertical >= 105.0f && velocidadVertical <= 285.0f ? 12 : 7;
     const bool evaluarTecnicaEntrada = entradaAguaActiva ||
@@ -648,7 +752,7 @@ void NivelRutaAnillos::calcularPuntaje()
                                      : 0;
     int penalizacionGolpes = golpes * (dificultad.getTipo() == FACIL ? 5 : dificultad.getTipo() == NORMAL ? 7 : 9);
     int penalizacion = penalizacionGolpes + penalizacionCorreccion;
-    int calculado = ruta + bonusMonedas + precision + bonusRitmo + bonusVelocidad - penalizacion;
+    int calculado = ruta + bonusMonedas + bonusAnillos + precision + bonusRitmo + bonusVelocidad - penalizacion;
 
     if (entradaAguaActiva || jugador->getY() >= piscinaFinal.y() - 220.0f) {
         const int pisoFinal = dificultad.getTipo() == FACIL ? 42 : dificultad.getTipo() == NORMAL ? 34 : 24;
@@ -782,6 +886,13 @@ void NivelRutaAnillos::dibujarIman(QPainter& painter)
             painter.drawLine(a, b);
             painter.drawLine(b, QPointF(a.x(), jugador->centro().y() + 28.0f));
         }
+        dibujarSpritePoderAnimado(painter,
+                                  spritePoderAccelerator,
+                                  QRectF(jugador->centro().x() - 96.0f,
+                                         jugador->centro().y() - 52.0f,
+                                         192.0f,
+                                         96.0f),
+                                  tiempoNivel);
     }
     else if (jugador->getTipo() == PERSONAJE_MUGINO) {
         painter.setPen(QPen(QColor(100, 255, 120, 210), 5));
@@ -790,6 +901,21 @@ void NivelRutaAnillos::dibujarIman(QPainter& painter)
                                        800.0f, radioIman * 0.64f), 14.0, 14.0);
         painter.setPen(QPen(QColor(210, 255, 160, 180), 2));
         painter.drawLine(QPointF(0.0f, jugador->centro().y()), QPointF(800.0f, jugador->centro().y()));
+        dibujarSpritePoderAnimado(painter,
+                                  spritePoderMugino,
+                                  QRectF(jugador->centro().x() - 300.0f,
+                                         jugador->centro().y() - 42.0f,
+                                         280.0f,
+                                         84.0f),
+                                  tiempoNivel,
+                                  true);
+        dibujarSpritePoderAnimado(painter,
+                                  spritePoderMugino,
+                                  QRectF(jugador->centro().x() + 20.0f,
+                                         jugador->centro().y() - 42.0f,
+                                         280.0f,
+                                         84.0f),
+                                  tiempoNivel);
     }
     else if (jugador->getTipo() == PERSONAJE_DARK_MATTER) {
         painter.setPen(QPen(QColor(190, 120, 255, 185), 3));
@@ -802,6 +928,13 @@ void NivelRutaAnillos::dibujarIman(QPainter& painter)
                       jugador->centro().y() + std::sin(angulo) * radio);
             painter.drawPoint(p);
         }
+        dibujarSpritePoderAnimado(painter,
+                                  spritePoderDarkMatter,
+                                  QRectF(jugador->centro().x() - 96.0f,
+                                         jugador->centro().y() - 96.0f,
+                                         192.0f,
+                                         192.0f),
+                                  tiempoNivel);
     }
     else {
         painter.setPen(QPen(color, 3));
@@ -816,6 +949,13 @@ void NivelRutaAnillos::dibujarIman(QPainter& painter)
                       jugador->centro().y() + std::sin(angulo) * radioIman);
             painter.drawLine(a, b);
         }
+        dibujarSpritePoderAnimado(painter,
+                                  spritePoderMikoto,
+                                  QRectF(jugador->centro().x() - 86.0f,
+                                         jugador->centro().y() - 62.0f,
+                                         172.0f,
+                                         124.0f),
+                                  tiempoNivel);
     }
 
     painter.restore();
@@ -942,7 +1082,7 @@ void NivelRutaAnillos::dibujarEscenario(QPainter& painter)
         }
     }
 
-    if (!saltoInicialPendiente && tiempoEntradaDron >= 2.25f && estaVisible(dron->rect())) {
+    if (!saltoInicialPendiente && tiempoEntradaDron >= RETARDO_ENTRADA_DRON && estaVisible(dron->rect())) {
         dron->dibujar(painter);
     }
     dibujarProyectilesDron(painter);
@@ -959,7 +1099,7 @@ void NivelRutaAnillos::dibujarEscenario(QPainter& painter)
 
 void NivelRutaAnillos::dibujarHud(QPainter& painter)
 {
-    panel(painter, QRectF(18, 18, 334, 188), QColor(3, 12, 25, 204));
+    panel(painter, QRectF(18, 18, 334, 210), QColor(3, 12, 25, 204));
 
     QFont fuente = painter.font();
     fuente.setPointSize(12);
@@ -984,15 +1124,16 @@ void NivelRutaAnillos::dibujarHud(QPainter& painter)
     barra(painter, QRectF(112, 116, 190, 10), jugador->getY() / (alturaMundo - 80.0f), QColor(120, 235, 255));
 
     painter.setPen(QColor(230, 245, 255));
-    painter.drawText(38, 151, "Monedas: " + QString::number(monedasRecolectadas) + "/" + QString::number(monedas.size()) +
-                               "   Golpes: " + QString::number(golpes) + "/4   Pts: " + QString::number(puntaje));
+    painter.drawText(38, 151, "Anillos: " + QString::number(anillosRecolectados) + "/" + QString::number(anillos.size()) +
+                               "   Monedas: " + QString::number(monedasRecolectadas) + "/" + QString::number(monedas.size()));
+    painter.drawText(38, 168, "Golpes: " + QString::number(golpes) + "/4   Pts: " + QString::number(puntaje));
 
-    painter.drawText(38, 178, "Vidas");
+    painter.drawText(38, 190, "Vidas");
     int vidasRestantes = std::max(0, 4 - golpes);
     for (int i = 0; i < 4; ++i) {
         const QPixmap& corazon = i < vidasRestantes ? spriteCorazonLleno : spriteCorazonVacio;
         if (!corazon.isNull()) {
-            painter.drawPixmap(QRect(90 + i * 28, 159, 24, 24), corazon);
+            painter.drawPixmap(QRect(90 + i * 28, 171, 24, 24), corazon);
         }
     }
 
@@ -1043,7 +1184,7 @@ void NivelRutaAnillos::dibujar(QPainter& painter)
         fuente.setBold(false);
         painter.setFont(fuente);
         painter.drawText(260, 286, "Puntaje final: " + QString::number(puntaje));
-        painter.drawText(260, 314, "Monedas metalicas: " + QString::number(monedasRecolectadas));
+        painter.drawText(260, 314, "Anillos y monedas: " + QString::number(anillosRecolectados) + " / " + QString::number(monedasRecolectadas));
         painter.drawText(260, 342, "Golpes recibidos: " + QString::number(golpes));
         painter.drawText(260, 370, "R reinicia el nivel");
     }
@@ -1127,7 +1268,8 @@ void NivelRutaAnillos::mousePresionado(const QPointF& posicion)
             cooldownIman = 2.8f;
         }
         radioIman = jugador->getRadioPoder();
-        jugador->activarImpulso(true);
+        jugador->activarImpulso(false);
+        poderUsadoNivel = true;
         eventosSonido.push_back(SONIDO_ANILLO);
     }
 }
@@ -1159,6 +1301,7 @@ void NivelRutaAnillos::reiniciarNivel()
     tiempoEntradaDron = 0.0f;
     tiempoCorreccionLateral = 0.0f;
     tiempoInvulnerable = 0.0f;
+    poderUsadoNivel = false;
     dronActivo = false;
     piscinaFinal.moveLeft(210.0f);
     piscinaVelocidad = 0.0f;
@@ -1202,7 +1345,7 @@ void NivelRutaAnillos::cambiarDificultad(TipoDificultad tipo)
         tiempoTotal = 46.0f;
     }
     else {
-        tiempoTotal = 42.0f;
+        tiempoTotal = 38.0f;
     }
 
     reiniciarNivel();
@@ -1232,7 +1375,7 @@ QString NivelRutaAnillos::nombreNivel() const
 
 QVector<EventoSonidoJuego> NivelRutaAnillos::consumirEventosSonido()
 {
-    QVector<EventoSonidoJuego> eventos = eventosSonido;
-    eventosSonido.clear();
+    QVector<EventoSonidoJuego> eventos;
+    eventos.swap(eventosSonido);
     return eventos;
 }

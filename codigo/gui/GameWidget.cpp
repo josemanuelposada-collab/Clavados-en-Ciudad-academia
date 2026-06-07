@@ -1,4 +1,5 @@
 #include "GameWidget.h"
+#include "../render/SpriteCache.h"
 #include <QPainter>
 #include <QApplication>
 #include <QDebug>
@@ -6,6 +7,8 @@
 #include <QRadialGradient>
 #include <QUrl>
 #include <algorithm>
+#include <array>
+#include <exception>
 #include "../logica/NivelPiscinaEntrenamiento.h"
 #include "../logica/NivelRutaAnillos.h"
 #include "../logica/JuegoException.h"
@@ -16,6 +19,59 @@ const float ALTO_BASE = 720.0f;
 const float ANCHO_MUNDO = 800.0f;
 const float ALTO_MUNDO = 600.0f;
 const float ESCALA_MUNDO = 1.2f;
+
+struct InfoPersonaje
+{
+    TipoPersonaje tipo;
+    QString nombre;
+    QString poder;
+    QString cualidades;
+    QString descripcion;
+    QString rutaSprite;
+    QColor color;
+};
+
+const std::array<InfoPersonaje, 4>& infosPersonajes()
+{
+    static const std::array<InfoPersonaje, 4> infos = {{
+        { PERSONAJE_MIKOTO, "Mikoto Misaka", "Campo electromagnetico",
+          "Precisa, impulsiva y competitiva",
+          "Mejor correccion de postura, salto fuerte y bonus por buen desempeno.",
+          ":/recursos/sprites/personajes/mikoto_misaka/01_mikoto_misaka_salto_desde_altura_01_parado.png",
+          QColor(255, 225, 95) },
+        { PERSONAJE_ACCELERATOR, "Accelerator", "Control vectorial",
+          "Calculador, estable y reactivo",
+          "Atrae monedas metalicas en linea directa y estabiliza trayectorias laterales.",
+          ":/recursos/sprites/personajes/accelerator/01_accelerator_salto_desde_altura_01_parado.png",
+          QColor(230, 245, 255) },
+        { PERSONAJE_MUGINO, "Mugino", "Meltdowner lateral",
+          "Agresiva, veloz y precisa",
+          "Desintegra bonus cercanos al activar Meltdowner y suma recompensa inmediata.",
+          ":/recursos/sprites/personajes/mugino/01_mugino_salto_desde_altura_01_parado.png",
+          QColor(100, 255, 130) },
+        { PERSONAJE_DARK_MATTER, "Dark Matter", "Densidad del aire",
+          "Creativo, tecnico y resistente",
+          "Altera el aire cercano para orbitar monedas y suavizar la entrada.",
+          ":/recursos/sprites/personajes/dark_matter/01_dark_matter_salto_desde_altura_01_parado.png",
+          QColor(190, 130, 255) }
+    }};
+    return infos;
+}
+
+const InfoPersonaje& infoPersonaje(TipoPersonaje tipo)
+{
+    for (const InfoPersonaje& info : infosPersonajes()) {
+        if (info.tipo == tipo) {
+            return info;
+        }
+    }
+    return infosPersonajes().front();
+}
+
+QRectF rectTarjetaPersonaje(int indice)
+{
+    return QRectF(596.0f + indice * 142.0f, 376.0f, 132.0f, 160.0f);
+}
 }
 
 GameWidget::GameWidget(QWidget* parent)
@@ -49,10 +105,12 @@ GameWidget::GameWidget(QWidget* parent)
 
     cargarNiveles();
     cargarSonidos();
+    cargarFondosMenu();
     if (sonidoMenu != nullptr) {
         sonidoMenu->play();
     }
 
+    relojFrame.start();
     timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &GameWidget::actualizar);
     timer->start(16);
@@ -127,15 +185,7 @@ void GameWidget::avanzarNivel()
 void GameWidget::aplicarDificultadSeleccionada()
 {
     for (const auto& nivelJuego : niveles) {
-        NivelPiscinaEntrenamiento* piscina = dynamic_cast<NivelPiscinaEntrenamiento*>(nivelJuego.get());
-        if (piscina != nullptr) {
-            piscina->cambiarDificultad(dificultadSeleccionada);
-        }
-
-        NivelRutaAnillos* ruta = dynamic_cast<NivelRutaAnillos*>(nivelJuego.get());
-        if (ruta != nullptr) {
-            ruta->cambiarDificultad(dificultadSeleccionada);
-        }
+        nivelJuego->cambiarDificultad(dificultadSeleccionada);
     }
 }
 
@@ -268,13 +318,45 @@ QPointF GameWidget::convertirAVirtual(const QPoint& posicion) const
     return QPointF((posicion.x() - margenX) / escala, (posicion.y() - margenY) / escala);
 }
 
+void GameWidget::cargarFondosMenu()
+{
+    fondoIntroPixel = SpriteCache::obtener(":/recursos/sprites/fondo_carga_ciudad_academia_pixel.png");
+    fondoMenuPixel = SpriteCache::obtener(":/recursos/sprites/fondo_menu_ciudad_academia_pixel.png");
+}
+
+void GameWidget::dibujarFondoPixel(QPainter& painter, const QPixmap& fondo)
+{
+    if (fondo.isNull()) {
+        QLinearGradient respaldo(0, 0, 0, ALTO_BASE);
+        respaldo.setColorAt(0.0, QColor(4, 12, 28));
+        respaldo.setColorAt(0.52, QColor(9, 70, 102));
+        respaldo.setColorAt(1.0, QColor(3, 8, 18));
+        painter.fillRect(QRectF(0, 0, ANCHO_BASE, ALTO_BASE), respaldo);
+        return;
+    }
+
+    const float destinoAspecto = ANCHO_BASE / ALTO_BASE;
+    const float fuenteAspecto = static_cast<float>(fondo.width()) / std::max(1, fondo.height());
+    QRectF fuente(0, 0, fondo.width(), fondo.height());
+
+    if (fuenteAspecto > destinoAspecto) {
+        const float anchoRecorte = fondo.height() * destinoAspecto;
+        fuente.setX((fondo.width() - anchoRecorte) * 0.5f);
+        fuente.setWidth(anchoRecorte);
+    }
+    else {
+        const float altoRecorte = fondo.width() / destinoAspecto;
+        fuente.setY((fondo.height() - altoRecorte) * 0.5f);
+        fuente.setHeight(altoRecorte);
+    }
+
+    painter.drawPixmap(QRectF(0, 0, ANCHO_BASE, ALTO_BASE), fondo, fuente);
+}
+
 void GameWidget::dibujarIntro(QPainter& painter)
 {
-    QLinearGradient fondo(0, 0, 0, 720);
-    fondo.setColorAt(0.0, QColor(4, 12, 28));
-    fondo.setColorAt(0.48, QColor(9, 70, 102));
-    fondo.setColorAt(1.0, QColor(3, 8, 18));
-    painter.fillRect(QRectF(0, 0, ANCHO_BASE, ALTO_BASE), fondo);
+    dibujarFondoPixel(painter, fondoIntroPixel);
+    painter.fillRect(QRectF(0, 0, ANCHO_BASE, ALTO_BASE), QColor(4, 8, 22, 82));
 
     float avance = std::clamp(tiempoIntro / 4.2f, 0.0f, 1.0f);
     float barrido = 1280.0f * avance;
@@ -286,13 +368,6 @@ void GameWidget::dibujarIntro(QPainter& painter)
     }
 
     painter.setPen(Qt::NoPen);
-    painter.setBrush(QColor(42, 205, 238, 72));
-    painter.drawRect(QRectF(1015, 80 - tiempoIntro * 18.0f, 24, 610));
-    painter.setBrush(QColor(255, 225, 95, 200));
-    for (int y = 130; y < 640; y += 72) {
-        painter.drawRect(QRectF(955, y - tiempoIntro * 10.0f, 132, 8));
-    }
-
     painter.setBrush(QColor(255, 225, 95));
     painter.drawRect(QRectF(150, 540, barrido * 0.46f, 5));
     painter.setBrush(QColor(42, 205, 238));
@@ -316,13 +391,99 @@ void GameWidget::dibujarIntro(QPainter& painter)
     painter.drawText(QRectF(154, 590, 500, 28), Qt::AlignLeft, "Click o Enter para continuar");
 }
 
+void GameWidget::dibujarTarjetaPersonaje(QPainter& painter, TipoPersonaje tipo, const QRectF& rect, bool activo)
+{
+    const InfoPersonaje& info = infoPersonaje(tipo);
+    painter.save();
+    painter.setPen(QPen(activo ? info.color : QColor(120, 230, 255, 105), activo ? 3 : 1));
+    painter.setBrush(activo ? QColor(info.color.red(), info.color.green(), info.color.blue(), 44) : QColor(4, 12, 28, 184));
+    painter.drawRect(rect);
+
+    const QPixmap& sprite = SpriteCache::obtener(info.rutaSprite);
+    QRectF areaSprite(rect.x() + 36.0f, rect.y() + 14.0f, 60.0f, 72.0f);
+    if (!sprite.isNull()) {
+        painter.drawPixmap(areaSprite, sprite, QRectF(0, 0, sprite.width(), sprite.height()));
+    }
+    else {
+        painter.setPen(info.color);
+        painter.setBrush(QColor(info.color.red(), info.color.green(), info.color.blue(), 45));
+        painter.drawRect(areaSprite);
+        painter.drawText(areaSprite, Qt::AlignCenter, info.nombre.left(2).toUpper());
+    }
+
+    QFont fuente = painter.font();
+    fuente.setPointSize(8);
+    fuente.setBold(true);
+    painter.setFont(fuente);
+    painter.setPen(activo ? info.color : QColor(236, 248, 255));
+    painter.drawText(QRectF(rect.x() + 8.0f, rect.y() + 92.0f, rect.width() - 16.0f, 18.0f),
+                     Qt::AlignCenter, info.nombre);
+
+    fuente.setPointSize(7);
+    fuente.setBold(false);
+    painter.setFont(fuente);
+    painter.setPen(QColor(198, 226, 238));
+    painter.drawText(QRectF(rect.x() + 8.0f, rect.y() + 112.0f, rect.width() - 16.0f, 40.0f),
+                     Qt::AlignCenter | Qt::TextWordWrap, "Poder: " + info.poder);
+    painter.restore();
+}
+
+void GameWidget::dibujarSelectorPersonajes(QPainter& painter)
+{
+    const InfoPersonaje& seleccionado = infoPersonaje(personajeSeleccionado);
+
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(QColor(2, 8, 22, 188));
+    painter.drawRect(QRectF(572, 112, 622, 462));
+    painter.setBrush(QColor(255, 225, 95, 210));
+    painter.drawRect(QRectF(572, 112, 6, 462));
+    painter.setPen(QPen(QColor(120, 230, 255, 88), 1));
+    painter.drawLine(QPointF(590, 112), QPointF(1194, 112));
+    painter.drawLine(QPointF(590, 574), QPointF(1194, 574));
+
+    QFont fuente = painter.font();
+    fuente.setPointSize(12);
+    fuente.setBold(true);
+    painter.setFont(fuente);
+    painter.setPen(QColor(255, 225, 95));
+    painter.drawText(QRectF(600, 132, 560, 28), Qt::AlignLeft, "Seleccion de personaje");
+
+    const QPixmap& sprite = SpriteCache::obtener(seleccionado.rutaSprite);
+    QRectF preview(620, 178, 92, 126);
+    if (!sprite.isNull()) {
+        painter.drawPixmap(preview, sprite, QRectF(0, 0, sprite.width(), sprite.height()));
+    }
+    else {
+        painter.setPen(seleccionado.color);
+        painter.drawRect(preview);
+    }
+
+    fuente.setPointSize(17);
+    fuente.setBold(true);
+    painter.setFont(fuente);
+    painter.setPen(QColor(244, 252, 255));
+    painter.drawText(QRectF(735, 174, 390, 32), Qt::AlignLeft, seleccionado.nombre);
+
+    fuente.setPointSize(10);
+    fuente.setBold(false);
+    painter.setFont(fuente);
+    painter.setPen(seleccionado.color);
+    painter.drawText(QRectF(735, 214, 390, 24), Qt::AlignLeft, "Poder: " + seleccionado.poder);
+    painter.setPen(QColor(210, 235, 244));
+    painter.drawText(QRectF(735, 244, 390, 24), Qt::AlignLeft, "Cualidades: " + seleccionado.cualidades);
+    painter.drawText(QRectF(735, 276, 390, 58), Qt::AlignLeft | Qt::TextWordWrap, "Efecto: " + seleccionado.descripcion);
+
+    int indice = 0;
+    for (const InfoPersonaje& info : infosPersonajes()) {
+        dibujarTarjetaPersonaje(painter, info.tipo, rectTarjetaPersonaje(indice), info.tipo == personajeSeleccionado);
+        ++indice;
+    }
+}
+
 void GameWidget::dibujarInicio(QPainter& painter)
 {
-    QLinearGradient fondo(0, 0, 0, 720);
-    fondo.setColorAt(0.0, QColor(6, 20, 42));
-    fondo.setColorAt(0.50, QColor(14, 92, 127));
-    fondo.setColorAt(1.0, QColor(5, 12, 28));
-    painter.fillRect(QRectF(0, 0, ANCHO_BASE, ALTO_BASE), fondo);
+    dibujarFondoPixel(painter, fondoMenuPixel);
+    painter.fillRect(QRectF(0, 0, ANCHO_BASE, ALTO_BASE), QColor(2, 7, 24, 104));
 
     QRadialGradient luz(920, 210, 620);
     luz.setColorAt(0.0, QColor(255, 223, 92, 52));
@@ -337,6 +498,8 @@ void GameWidget::dibujarInicio(QPainter& painter)
     }
 
     painter.setPen(Qt::NoPen);
+    painter.setBrush(QColor(2, 8, 22, 190));
+    painter.drawRect(QRectF(94, 86, 452, 520));
     painter.setBrush(QColor(255, 215, 75));
     painter.drawRect(QRectF(96, 96, 8, 510));
     painter.setBrush(QColor(235, 252, 255, 28));
@@ -344,18 +507,19 @@ void GameWidget::dibujarInicio(QPainter& painter)
     painter.drawRect(QRectF(120, 606, 840, 2));
 
     QFont titulo = painter.font();
-    titulo.setPointSize(38);
+    titulo.setPointSize(30);
     titulo.setBold(true);
     painter.setFont(titulo);
     painter.setPen(QColor(235, 252, 255));
-    painter.drawText(QRectF(136, 118, 850, 72), Qt::AlignLeft | Qt::AlignVCenter, "Clavados en Ciudad Academia");
+    painter.drawText(QRectF(136, 112, 380, 92), Qt::AlignLeft | Qt::AlignVCenter | Qt::TextWordWrap,
+                     "Clavados en Ciudad Academia");
 
     QFont subtitulo = painter.font();
-    subtitulo.setPointSize(14);
+    subtitulo.setPointSize(11);
     subtitulo.setBold(false);
     painter.setFont(subtitulo);
     painter.setPen(QColor(198, 236, 248));
-    painter.drawText(QRectF(140, 206, 690, 52), Qt::AlignLeft | Qt::TextWordWrap,
+    painter.drawText(QRectF(140, 214, 365, 86), Qt::AlignLeft | Qt::TextWordWrap,
                      "Salta desde una torre monumental, atraviesa anillos de control y busca una entrada limpia en la piscina de Ciudad Academia.");
 
     QString dificultad = dificultadSeleccionada == FACIL ? "Facil" : dificultadSeleccionada == NORMAL ? "Normal" : "Dificil";
@@ -387,34 +551,7 @@ void GameWidget::dibujarInicio(QPainter& painter)
         painter.drawText(item.rect, Qt::AlignCenter, item.texto);
     }
 
-    struct OpcionPersonaje {
-        QRectF rect;
-        QString nombre;
-        QString poder;
-        TipoPersonaje tipo;
-        QColor color;
-    };
-
-    OpcionPersonaje personajes[] = {
-        { QRectF(620, 286, 214, 56), "Mikoto", "campo electromagnetico", PERSONAJE_MIKOTO, QColor(255, 225, 95) },
-        { QRectF(850, 286, 214, 56), "Accelerator", "control vectorial", PERSONAJE_ACCELERATOR, QColor(230, 245, 255) },
-        { QRectF(620, 358, 214, 56), "Mugino", "meltdowner lateral", PERSONAJE_MUGINO, QColor(90, 240, 120) },
-        { QRectF(850, 358, 214, 56), "Dark Matter", "densidad del aire", PERSONAJE_DARK_MATTER, QColor(184, 116, 255) }
-    };
-
-    painter.setPen(QColor(255, 225, 95));
-    painter.drawText(QRectF(620, 252, 444, 26), Qt::AlignLeft | Qt::AlignVCenter, "Personaje y poder fisico");
-
-    for (const OpcionPersonaje& item : personajes) {
-        bool activo = personajeSeleccionado == item.tipo;
-        painter.setPen(QPen(activo ? item.color : QColor(120, 230, 255, 100), activo ? 3 : 1));
-        painter.setBrush(activo ? QColor(item.color.red(), item.color.green(), item.color.blue(), 38) : QColor(4, 18, 32, 130));
-        painter.drawRect(item.rect);
-        painter.setPen(activo ? item.color : QColor(226, 244, 250));
-        painter.drawText(QRectF(item.rect.x() + 14, item.rect.y() + 9, item.rect.width() - 24, 18), Qt::AlignLeft, item.nombre);
-        painter.setPen(QColor(184, 222, 234));
-        painter.drawText(QRectF(item.rect.x() + 14, item.rect.y() + 31, item.rect.width() - 24, 16), Qt::AlignLeft, item.poder);
-    }
+    dibujarSelectorPersonajes(painter);
 
     painter.setPen(Qt::NoPen);
     painter.setBrush(QColor(255, 225, 95));
@@ -433,16 +570,9 @@ void GameWidget::dibujarInicio(QPainter& painter)
     ayuda.setBold(false);
     painter.setFont(ayuda);
     painter.setPen(QColor(222, 245, 255));
-    painter.drawText(QRectF(140, 524, 900, 24), Qt::AlignLeft, "1 Facil   2 Normal   3 Dificil   4 Mikoto   5 Accelerator   6 Mugino   7 Dark Matter");
-    painter.drawText(QRectF(140, 554, 900, 24), Qt::AlignLeft, "Controles: WASD/Flechas, click poder fisico, R reiniciar, Esc pausa, F11 pantalla completa");
+    painter.drawText(QRectF(140, 524, 390, 24), Qt::AlignLeft, "1 Facil  2 Normal  3 Dificil");
+    painter.drawText(QRectF(140, 554, 390, 24), Qt::AlignLeft, "4-7 personaje  |  F11 pantalla completa");
 
-    painter.setPen(Qt::NoPen);
-    painter.setBrush(QColor(42, 205, 238, 42));
-    painter.drawRect(QRectF(1106, 70, 26, 560));
-    painter.setBrush(QColor(255, 225, 95, 185));
-    for (int y = 128; y < 610; y += 72) {
-        painter.drawRect(QRectF(1048, y, 132, 8));
-    }
 }
 
 void GameWidget::dibujarPausa(QPainter& painter)
@@ -615,11 +745,13 @@ bool GameWidget::campaniaCompletada()
 void GameWidget::actualizar()
 {
     try {
+        float dt = std::clamp(relojFrame.restart() / 1000.0f, 0.001f, 0.033f);
+
         if (estadoPantalla == PANTALLA_INTRO) {
             if (sonidoMenu != nullptr && !sonidoMenu->isPlaying()) {
                 sonidoMenu->play();
             }
-            tiempoIntro += 0.016f;
+            tiempoIntro += dt;
             if (tiempoIntro >= 4.6f) {
                 estadoPantalla = PANTALLA_INICIO;
             }
@@ -628,7 +760,7 @@ void GameWidget::actualizar()
         }
 
         if (estadoPantalla == PANTALLA_GAME_OVER) {
-            tiempoGameOver += 0.016f;
+            tiempoGameOver += dt;
             if (tiempoGameOver >= 3.0f) {
                 reiniciarCampania();
             }
@@ -644,7 +776,7 @@ void GameWidget::actualizar()
             return;
         }
 
-        nivel()->actualizar(0.016f);
+        nivel()->actualizar(dt);
         procesarSonidosNivel();
         if (campaniaCompletada()) {
             if (!victoriaProcesada) {
@@ -652,7 +784,7 @@ void GameWidget::actualizar()
                 victoriaProcesada = true;
                 tiempoVictoria = 0.0f;
             }
-            tiempoVictoria += 0.016f;
+            tiempoVictoria += dt;
             if (tiempoVictoria >= 4.0f) {
                 reiniciarCampania();
             }
@@ -670,6 +802,13 @@ void GameWidget::actualizar()
         QApplication::beep();
         update();
     }
+    catch (const std::exception& error) {
+        hayError = true;
+        ultimoError = QString::fromUtf8(error.what());
+        qWarning() << error.what();
+        QApplication::beep();
+        update();
+    }
 
     update();
 }
@@ -679,8 +818,6 @@ void GameWidget::paintEvent(QPaintEvent* event)
     Q_UNUSED(event);
 
     QPainter painter(this);
-    painter.setRenderHint(QPainter::Antialiasing, true);
-    painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
     configurarLienzo(painter);
 
     try {
@@ -725,6 +862,15 @@ void GameWidget::paintEvent(QPaintEvent* event)
         painter.fillRect(QRectF(0, 0, ANCHO_BASE, ALTO_BASE), QColor(25, 25, 25));
         painter.setPen(Qt::white);
         painter.drawText(60, 80, "Error del juego:");
+        painter.drawText(60, 110, error.what());
+    }
+    catch (const std::exception& error) {
+        hayError = true;
+        ultimoError = QString::fromUtf8(error.what());
+        qWarning() << error.what();
+        painter.fillRect(QRectF(0, 0, ANCHO_BASE, ALTO_BASE), QColor(25, 25, 25));
+        painter.setPen(Qt::white);
+        painter.drawText(60, 80, "Error estandar:");
         painter.drawText(60, 110, error.what());
     }
 }
@@ -875,12 +1021,6 @@ void GameWidget::mousePressEvent(QMouseEvent* event)
             return;
         }
 
-        const QRectF areasPersonaje[] = {
-            QRectF(620, 286, 214, 56),
-            QRectF(850, 286, 214, 56),
-            QRectF(620, 358, 214, 56),
-            QRectF(850, 358, 214, 56)
-        };
         const TipoPersonaje tipos[] = {
             PERSONAJE_MIKOTO,
             PERSONAJE_ACCELERATOR,
@@ -889,7 +1029,7 @@ void GameWidget::mousePressEvent(QMouseEvent* event)
         };
 
         for (int i = 0; i < 4; ++i) {
-            if (areasPersonaje[i].contains(virtualPos)) {
+            if (rectTarjetaPersonaje(i).contains(virtualPos)) {
                 personajeSeleccionado = tipos[i];
                 aplicarPersonajeSeleccionado();
                 update();

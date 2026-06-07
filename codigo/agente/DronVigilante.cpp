@@ -23,12 +23,15 @@ DronVigilante::DronVigilante(float xInicial, float yInicial)
       tiempoDisparo(0.0f),
       tiempoDesdeImpacto(0.0f),
       impactosJugador(0),
-      evasionesJugador(0)
+      evasionesJugador(0),
+      bonusRecolectados(0),
+      usosPoderObservados(0),
+      promedioPuntaje(50.0f)
 {
     memoriaErrores.fill(0.0f);
-    spriteNormal.load(":/recursos/sprites/dron_normal.png");
-    spriteEscaneo.load(":/recursos/sprites/dron_escaneo.png");
-    spriteAlerta.load(":/recursos/sprites/dron_alerta.png");
+    spriteNormal = SpriteCache::obtener(":/recursos/sprites/dron_normal.png");
+    spriteEscaneo = SpriteCache::obtener(":/recursos/sprites/dron_escaneo.png");
+    spriteAlerta = SpriteCache::obtener(":/recursos/sprites/dron_alerta.png");
 
     if (spriteNormal.isNull()) {
         throw JuegoException("No se pudo cargar el sprite principal del dron vigilante.");
@@ -179,6 +182,16 @@ void DronVigilante::registrarAciertoJugador()
     aciertosJugador++;
 }
 
+void DronVigilante::registrarResultado(float errorEntrada, float puntaje, bool usoPoder)
+{
+    aprender(errorEntrada);
+    promedioPuntaje = promedioPuntaje * 0.74f + std::clamp(puntaje, 0.0f, 100.0f) * 0.26f;
+    if (usoPoder) {
+        usosPoderObservados++;
+    }
+    presionActual = calcularPresionDificultad();
+}
+
 void DronVigilante::registrarImpactoJugador()
 {
     impactosJugador++;
@@ -190,6 +203,12 @@ void DronVigilante::registrarImpactoJugador()
 void DronVigilante::registrarEvasionJugador()
 {
     evasionesJugador++;
+    presionActual = calcularPresionDificultad();
+}
+
+void DronVigilante::registrarBonusRecolectado()
+{
+    bonusRecolectados++;
     presionActual = calcularPresionDificultad();
 }
 
@@ -269,7 +288,9 @@ QPointF DronVigilante::calcularVectorDisparo(const Personaje& jugador, float rap
 float DronVigilante::calcularPresionDificultad() const
 {
     if (memoriaCantidad == 0) {
-        float presionInicial = aciertosJugador * 0.12f + impactosJugador * 0.08f - evasionesJugador * 0.035f;
+        float presionInicial = aciertosJugador * 0.12f + impactosJugador * 0.08f +
+                                bonusRecolectados * 0.018f + usosPoderObservados * 0.025f -
+                                evasionesJugador * 0.035f;
         return std::clamp(presionInicial, 0.0f, 0.45f);
     }
 
@@ -278,9 +299,21 @@ float DronVigilante::calcularPresionDificultad() const
     float racha = std::min(aciertosJugador * 0.12f, 0.36f);
     float presionImpactos = std::min(impactosJugador * 0.08f, 0.32f);
     float alivioEvasiones = std::min(evasionesJugador * 0.035f, 0.22f);
+    float presionBonus = std::min(bonusRecolectados * 0.018f, 0.16f);
+    float presionPoder = std::min(usosPoderObservados * 0.025f, 0.18f);
+    float ajustePuntaje = promedioPuntaje >= 78.0f ? 0.10f :
+                          promedioPuntaje <= 42.0f ? -0.14f :
+                                                       0.0f;
     float descanso = tiempoDesdeImpacto > 6.0f ? -0.08f : 0.0f;
     float tendencia = tendenciaError < -4.0f ? 0.10f : tendenciaError > 8.0f ? -0.06f : 0.0f;
-    return std::clamp(precisionJugador + racha + presionImpactos + tendencia + descanso - alivioEvasiones, 0.0f, 1.0f);
+    return std::clamp(precisionJugador + racha + presionImpactos + presionBonus + presionPoder +
+                          ajustePuntaje + tendencia + descanso - alivioEvasiones,
+                      0.0f, 1.0f);
+}
+
+float DronVigilante::obtenerPresionAdaptativa() const
+{
+    return calcularPresionDificultad();
 }
 
 EstadoDron DronVigilante::getEstado() const

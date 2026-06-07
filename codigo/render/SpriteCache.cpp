@@ -20,6 +20,8 @@ void SpriteCache::dibujarAjustado(QPainter& painter,
                                   const QRect& destino,
                                   const QString& etiqueta)
 {
+    Q_UNUSED(etiqueta);
+
     if (sprite.isNull() || destino.isEmpty()) {
         return;
     }
@@ -27,8 +29,7 @@ void SpriteCache::dibujarAjustado(QPainter& painter,
     QSize tamano = sprite.size();
     tamano.scale(destino.size(), Qt::KeepAspectRatio);
 
-    const QString clave = QString("%1:%2:%3x%4")
-                              .arg(etiqueta)
+    const QString clave = QString("%1:%2x%3")
                               .arg(sprite.cacheKey())
                               .arg(tamano.width())
                               .arg(tamano.height());

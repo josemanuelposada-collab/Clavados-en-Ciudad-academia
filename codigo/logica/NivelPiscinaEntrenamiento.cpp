@@ -83,28 +83,28 @@ NivelPiscinaEntrenamiento::NivelPiscinaEntrenamiento()
     zonaViento = QRectF(300.0f, 190.0f, 190.0f, 238.0f);
     suelo = QRectF(0.0f, 520.0f, ANCHO_NIVEL, 80.0f);
 
-    spritePiscinaBase.load(":/recursos/sprites/piscina_ciudad_academia.png");
-    spritePiscinaPremium.load(":/recursos/sprites/piscina_final_premium.png");
-    spriteViento.load(":/recursos/sprites/viento_lateral.png");
-    spriteVientoDerecha.load(":/recursos/sprites/velocidad_derecha.png");
-    spriteVientoIzquierda.load(":/recursos/sprites/velocidad_izquierda.png");
-    spriteFondoCiudad.load(":/recursos/sprites/fondo_vertical_entrenamiento.png");
-    spriteChapuzonLimpio.load(":/recursos/sprites/chapuzon_limpio.png");
-    spriteChapuzonMedio.load(":/recursos/sprites/chapuzon_medio.png");
-    spriteChapuzonFuerte.load(":/recursos/sprites/chapuzon_fuerte.png");
-    spriteBurbujas.load(":/recursos/sprites/burbujas_entrada.png");
-    spriteTexturaPixel.load(":/recursos/sprites/textura_pixel_overlay.png");
-    spriteAlrededorPiscina.load(":/recursos/sprites/alrededor_piscina.jpg");
-    spriteCorazonLleno.load(":/recursos/sprites/hud_corazon_lleno.png");
-    spriteCorazonVacio.load(":/recursos/sprites/hud_corazon_vacio.png");
-    spriteAdvertenciaHud.load(":/recursos/sprites/hud_advertencia.png");
+    spritePiscinaBase = SpriteCache::obtener(":/recursos/sprites/piscina_ciudad_academia.png");
+    spritePiscinaPremium = SpriteCache::obtener(":/recursos/sprites/piscina_final_premium.png");
+    spriteViento = SpriteCache::obtener(":/recursos/sprites/viento_lateral.png");
+    spriteVientoDerecha = SpriteCache::obtener(":/recursos/sprites/velocidad_derecha.png");
+    spriteVientoIzquierda = SpriteCache::obtener(":/recursos/sprites/velocidad_izquierda.png");
+    spriteFondoCiudad = SpriteCache::obtener(":/recursos/sprites/fondo_vertical_entrenamiento.png");
+    spriteChapuzonLimpio = SpriteCache::obtener(":/recursos/sprites/chapuzon_limpio.png");
+    spriteChapuzonMedio = SpriteCache::obtener(":/recursos/sprites/chapuzon_medio.png");
+    spriteChapuzonFuerte = SpriteCache::obtener(":/recursos/sprites/chapuzon_fuerte.png");
+    spriteBurbujas = SpriteCache::obtener(":/recursos/sprites/burbujas_entrada.png");
+    spriteTexturaPixel = SpriteCache::obtener(":/recursos/sprites/textura_pixel_overlay.png");
+    spriteAlrededorPiscina = SpriteCache::obtener(":/recursos/sprites/alrededor_piscina.jpg");
+    spriteCorazonLleno = SpriteCache::obtener(":/recursos/sprites/hud_corazon_lleno.png");
+    spriteCorazonVacio = SpriteCache::obtener(":/recursos/sprites/hud_corazon_vacio.png");
+    spriteAdvertenciaHud = SpriteCache::obtener(":/recursos/sprites/hud_advertencia.png");
 
     exigirSprite(spritePiscinaPremium, "piscina_final_premium.png");
     exigirSprite(spriteCorazonLleno, "hud_corazon_lleno.png");
     exigirSprite(spriteCorazonVacio, "hud_corazon_vacio.png");
 
     intentoActual = 1;
-    intentosMaximos = 5;
+    intentosMaximos = dificultad.getIntentosMaximos();
     puntajeTotal = 0;
     puntajeObjetivo = 300;
     puntajeUltimoIntento = 0;
@@ -161,7 +161,7 @@ NivelPiscinaEntrenamiento::~NivelPiscinaEntrenamiento() = default;
 
 void NivelPiscinaEntrenamiento::aplicarParametrosDificultad()
 {
-    intentosMaximos = 5;
+    intentosMaximos = dificultad.getIntentosMaximos();
     if (dificultad.getTipo() == FACIL) {
         puntajeObjetivo = 260;
         potenciaMinima = 160.0f;
@@ -177,12 +177,14 @@ void NivelPiscinaEntrenamiento::aplicarParametrosDificultad()
         gravedad = 305.0f;
     }
     else {
-        puntajeObjetivo = 330;
+        puntajeObjetivo = 270;
         potenciaMinima = 170.0f;
         potenciaMaxima = 322.0f;
         velocidadCambioPotencia = 145.0f;
         gravedad = 318.0f;
     }
+
+    validarObjetivoNivel1();
     potenciaActual = std::clamp(potenciaActual, potenciaMinima, potenciaMaxima);
     jugador->setEnergiaMaxima(dificultad.getEnergiaInicial());
     radioIman = jugador->getRadioPoder();
@@ -210,6 +212,12 @@ void NivelPiscinaEntrenamiento::configurarIntento()
     plataforma->configurarOscilacion(amplitudPlataforma, frecuenciaPlataforma);
     plataforma->colocarEn(xBasePlataforma, 218.0f);
     velocidadPlataforma = 0.0f;
+}
+
+void NivelPiscinaEntrenamiento::validarObjetivoNivel1()
+{
+    const int maximoMatematico = intentosMaximos * 100;
+    puntajeObjetivo = std::min(puntajeObjetivo, maximoMatematico);
 }
 
 void NivelPiscinaEntrenamiento::actualizarZonaPerfecta()
@@ -911,7 +919,7 @@ QString NivelPiscinaEntrenamiento::nombreNivel() const
 
 QVector<EventoSonidoJuego> NivelPiscinaEntrenamiento::consumirEventosSonido()
 {
-    QVector<EventoSonidoJuego> eventos = eventosSonido;
-    eventosSonido.clear();
+    QVector<EventoSonidoJuego> eventos;
+    eventos.swap(eventosSonido);
     return eventos;
 }

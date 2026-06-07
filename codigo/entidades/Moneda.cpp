@@ -67,6 +67,30 @@ void Moneda::atraerHacia(const QPointF& objetivo, float intensidad, float radio,
     FisicaJuego::limitarVector(vx, vy, 760.0f);
 }
 
+void Moneda::atraerRectilineoHacia(const QPointF& objetivo, float rapidez, float radio, float dt)
+{
+    if (recolectada) {
+        return;
+    }
+
+    const float dx = objetivo.x() - centro().x();
+    const float dy = objetivo.y() - centro().y();
+    const float distancia2 = FisicaJuego::distanciaCuadrada(dx, dy);
+    if (distancia2 < 1.0f || distancia2 > radio * radio) {
+        return;
+    }
+
+    const float distancia = std::sqrt(distancia2);
+    const float direccionX = dx / distancia;
+    const float direccionY = dy / distancia;
+    const float paso = std::min(distancia, rapidez * dt);
+
+    x += direccionX * paso;
+    y += direccionY * paso;
+    vx = direccionX * rapidez;
+    vy = direccionY * rapidez;
+}
+
 void Moneda::desplazarVectorialHacia(const QPointF& objetivo, float intensidad, float radio, float dt)
 {
     if (recolectada) {

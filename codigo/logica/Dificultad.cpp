@@ -39,16 +39,16 @@ void Dificultad::configurar(TipoDificultad nuevoTipo)
         energiaInicial = 100.0f;
     }
     else {
-        intensidadViento = 75.0f;
-        velocidadPlataforma = 2.9f;
-        amplitudPlataforma = 68.0f;
-        factorGravedad = 1.10f;
-        factorPiscinaMovil = 1.30f;
-        factorRafagas = 1.28f;
-        factorAgente = 1.22f;
-        puntajeMinimo = 65;
+        intensidadViento = 92.0f;
+        velocidadPlataforma = 3.25f;
+        amplitudPlataforma = 78.0f;
+        factorGravedad = 1.14f;
+        factorPiscinaMovil = 1.58f;
+        factorRafagas = 1.62f;
+        factorAgente = 1.44f;
+        puntajeMinimo = 72;
         intentosMaximos = 3;
-        energiaInicial = 80.0f;
+        energiaInicial = 76.0f;
     }
 }
 

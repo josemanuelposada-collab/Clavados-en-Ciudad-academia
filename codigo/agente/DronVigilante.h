@@ -1,6 +1,7 @@
 #ifndef DRONVIGILANTE_H
 #define DRONVIGILANTE_H
 
+#include "AgenteInteligente.h"
 #include "../entidades/Entidad.h"
 #include "../entidades/Personaje.h"
 #include <QPixmap>
@@ -27,7 +28,7 @@ struct PercepcionDron
     bool jugadorImpulsando;
 };
 
-class DronVigilante : public Entidad
+class DronVigilante : public Entidad, public AgenteInteligente
 {
 private:
     float xBase;
@@ -49,6 +50,9 @@ private:
     float tiempoDesdeImpacto;
     int impactosJugador;
     int evasionesJugador;
+    int bonusRecolectados;
+    int usosPoderObservados;
+    float promedioPuntaje;
 
     QPixmap spriteNormal;
     QPixmap spriteEscaneo;
@@ -66,8 +70,10 @@ public:
     void actuar(float dt, const PercepcionDron& percepcion);
     void aprender(float errorEntrada);
     void registrarAciertoJugador();
-    void registrarImpactoJugador();
-    void registrarEvasionJugador();
+    void registrarResultado(float errorEntrada, float puntaje, bool usoPoder) override;
+    void registrarImpactoJugador() override;
+    void registrarEvasionJugador() override;
+    void registrarBonusRecolectado() override;
     void reiniciarMemoriaParcial();
     void colocarEn(float nuevoX, float nuevoY);
     void colocarY(float nuevoY);
@@ -75,6 +81,7 @@ public:
     QPointF calcularVectorDisparo(const Personaje& jugador, float rapidez) const;
 
     float calcularPresionDificultad() const;
+    float obtenerPresionAdaptativa() const override;
     EstadoDron getEstado() const;
 };
 

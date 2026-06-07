@@ -99,6 +99,7 @@ private:
     void actualizarZonaPerfecta();
     void actualizarCamara();
     void activarIman();
+    void validarObjetivoNivel1();
 
     void verificarPiscina();
     void verificarSuelo();
@@ -127,7 +128,7 @@ public:
 
     void reiniciarNivel() override;
     void configurarPersonaje(TipoPersonaje tipo) override;
-    void cambiarDificultad(TipoDificultad tipo);
+    void cambiarDificultad(TipoDificultad tipo) override;
     void aplicarParametrosDificultad();
 
     int getPuntaje() const;

@@ -51,6 +51,10 @@ private:
     QPixmap spriteCorazonVacio;
     QPixmap spritePlataformaInicio;
     QPixmap spriteAlrededorPiscina;
+    QPixmap spritePoderMikoto;
+    QPixmap spritePoderAccelerator;
+    QPixmap spritePoderMugino;
+    QPixmap spritePoderDarkMatter;
 
     Dificultad dificultad;
     QVector<EventoSonidoJuego> eventosSonido;
@@ -85,6 +89,7 @@ private:
     float tiempoEntradaDron;
     float tiempoCorreccionLateral;
     float tiempoInvulnerable;
+    bool poderUsadoNivel;
     int calidadEntrada;
     bool nivelSuperado;
     bool nivelPerdido;
@@ -111,7 +116,7 @@ public:
     QString nombreNivel() const override;
     QVector<EventoSonidoJuego> consumirEventosSonido() override;
 
-    void cambiarDificultad(TipoDificultad tipo);
+    void cambiarDificultad(TipoDificultad tipo) override;
 
 private:
     void crearEntidades();
@@ -119,6 +124,8 @@ private:
     void liberarEntidades();
     void aplicarMovimientoJugador(float dt);
     void actualizarMonedas(float dt);
+    void aplicarMeltdownerInstantaneo();
+    void aplicarPresionAgente(float dt);
     void actualizarProyectilesDron(float dt);
     void crearProyectilDron();
     void resolverColisionProyectil(ProyectilDron& proyectil);

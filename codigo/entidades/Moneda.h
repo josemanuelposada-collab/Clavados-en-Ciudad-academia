@@ -19,6 +19,7 @@ public:
     void actualizar(float dt) override;
     void dibujar(QPainter& painter) override;
     void atraerHacia(const QPointF& objetivo, float intensidad, float radio, float dt);
+    void atraerRectilineoHacia(const QPointF& objetivo, float rapidez, float radio, float dt);
     void desplazarVectorialHacia(const QPointF& objetivo, float intensidad, float radio, float dt);
     void canalizarMeltdowner(const QPointF& origen, float intensidad, float alcanceVertical, float dt);
     void orbitarHacia(const QPointF& objetivo, float intensidad, float radio, float dt);

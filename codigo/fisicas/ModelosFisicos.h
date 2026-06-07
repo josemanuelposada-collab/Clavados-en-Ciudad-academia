@@ -33,6 +33,17 @@ namespace FisicaJuego
         posicion += velocidad * dt;
     }
 
+    inline void integrarMovimientoAcelerado(float& posicion, float& velocidad, float aceleracion, float dt)
+    {
+        posicion += velocidad * dt + 0.5f * aceleracion * dt * dt;
+        velocidad += aceleracion * dt;
+    }
+
+    inline float aplicarArrastre(float velocidad, float coeficiente, float dt)
+    {
+        return velocidad * std::clamp(1.0f - coeficiente * dt, 0.0f, 1.0f);
+    }
+
     inline void limitarVector(float& vx, float& vy, float rapidezMaxima)
     {
         float rapidez2 = rapidezCuadrada(vx, vy);

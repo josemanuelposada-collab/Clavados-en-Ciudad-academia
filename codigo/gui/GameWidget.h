@@ -6,6 +6,8 @@
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QSoundEffect>
+#include <QElapsedTimer>
+#include <QPixmap>
 #include <memory>
 #include <vector>
 #include "../logica/NivelJuego.h"
@@ -26,6 +28,7 @@ class GameWidget : public QWidget
 
 private:
     QTimer* timer;
+    QElapsedTimer relojFrame;
     std::vector<std::unique_ptr<NivelJuego>> niveles;
     int nivelActual;
     bool mostrarAyuda;
@@ -40,6 +43,8 @@ private:
     QSoundEffect* sonidoNivel;
     QSoundEffect* sonidoMenu;
     QSoundEffect* sonidoGameOver;
+    QPixmap fondoIntroPixel;
+    QPixmap fondoMenuPixel;
     float tiempoIntro;
     float tiempoGameOver;
     float tiempoVictoria;
@@ -61,8 +66,12 @@ private:
     void procesarSonidosNivel();
     void configurarLienzo(QPainter& painter);
     QPointF convertirAVirtual(const QPoint& posicion) const;
+    void cargarFondosMenu();
+    void dibujarFondoPixel(QPainter& painter, const QPixmap& fondo);
     void dibujarIntro(QPainter& painter);
     void dibujarInicio(QPainter& painter);
+    void dibujarSelectorPersonajes(QPainter& painter);
+    void dibujarTarjetaPersonaje(QPainter& painter, TipoPersonaje tipo, const QRectF& rect, bool activo);
     void dibujarPausa(QPainter& painter);
     void dibujarGameOver(QPainter& painter);
     void dibujarError(QPainter& painter);

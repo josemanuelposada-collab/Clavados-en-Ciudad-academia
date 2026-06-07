@@ -21,6 +21,7 @@ SOURCES += \
     mainwindow.cpp
 
 HEADERS += \
+    agente/AgenteInteligente.h \
     agente/DronVigilante.h \
     entidades/Anillo.h \
     entidades/Entidad.h \
